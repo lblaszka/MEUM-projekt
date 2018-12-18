@@ -1,0 +1,7 @@
+\contentsline {section}{\numberline {1.}Cel}{3}{section.0.1}
+\contentsline {section}{\numberline {2.}Za\IeC {\l }o\IeC {\.z}enia}{3}{section.0.2}
+\contentsline {section}{\numberline {3.}Kr\IeC {\'o}tki wst\IeC {\k e}p teoretyczny}{3}{section.0.3}
+\contentsline {subsection}{\numberline {3.1.}ARIMA}{3}{subsection.0.3.1}
+\contentsline {subsection}{\numberline {3.2.}Metoda xgboost}{3}{subsection.0.3.2}
+\contentsline {section}{\numberline {4.}Zbi\IeC {\'o}r danych}{4}{section.0.4}
+\contentsline {section}{\numberline {5.}Prezentacja wynik\IeC {\'o}w}{5}{section.0.5}
