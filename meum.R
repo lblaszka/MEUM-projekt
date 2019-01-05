@@ -1,24 +1,22 @@
 library(TTR)
 library(xgboost)
+library(TSPred)
 
 NUMBER_OF_NN3_TIME_SERIES = 111
 TEST_DATA_LENGTH = 18
 
 DEBUG = TRUE
 
-input_time_series = read.csv('input.csv', header = F)
-
-if (length(input_time_series) != NUMBER_OF_NN3_TIME_SERIES) {
-    stop("NN3 benchmark includes ", NUMBER_OF_NN3_TIME_SERIES,
-         " time series, found ", length(input_time_series))
-}
-
-input_time_series = matrix(unlist(input_time_series, use.names = F),
-                           ncol = NUMBER_OF_NN3_TIME_SERIES)
+# Load train data
+data(NN3.A)
+# Load test data
+data(NN3.A.cont)
 
 #for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
-for (i in 1:2) {
-    tmp_ts = na.omit(input_time_series[,i])
+for (i in 1:1) {
+    tmp_ts = append(as.numeric(unlist(na.omit(NN3.A[i]))),
+                    as.numeric(unlist(na.omit(NN3.A.cont[i]))))
+
 
     # Create input data features for XGBoost
     month_in_year = 0:(length(tmp_ts)-1) %% 12
