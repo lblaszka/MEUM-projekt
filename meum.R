@@ -1,6 +1,9 @@
+#!/bin/Rscript
 library(TTR)
 library(xgboost)
 library(TSPred)
+library(tseries)
+library(forecast)
 
 #NUMBER_OF_NN3_TIME_SERIES = 2
 NUMBER_OF_NN3_TIME_SERIES = 111
@@ -8,10 +11,8 @@ TEST_DATA_LENGTH = 18
 
 DEBUG = TRUE
 
-# Load train data
-data(NN3.A)
-# Load test data
-data(NN3.A.cont)
+# Load NN3 ts
+data(NN3.A, NN3.A.cont)
 
 for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     tmp_ts = append(as.numeric(unlist(na.omit(NN3.A[i]))),
@@ -52,6 +53,16 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     } else {
         xgb_relative_error = cbind(xgb_error)
     }
+
+    #ARIMA
+    arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
+    arima_error = (arima_forecast - NN3.A.cont[i] ) / NN3.A.cont[i]
+
+    if (exists("arima_relative_error")) {
+        arima_relative_error = cbind(arima_relative_error, arima_error)
+    } else {
+        arima_relative_error = cbind(arima_error)
+    }
 }
 
 print(typeof(xgb_relative_error))
@@ -74,6 +85,31 @@ plot(xgb_relative_error[,1],
      ylim=c(round(min(xgb_relative_error))-1, round(max(xgb_relative_error)) +1))
 for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
 points(xgb_relative_error[,i],
+       pch = 20)
+}
+grid()
+dev.off()
+
+#ARIMA
+arima_relative_error = data.matrix( arima_relative_error )
+pdf("arima_rel_err_boxplot.pdf")
+boxplot(as.vector(arima_relative_error),
+        ylab = "Blad wzgledny [%]")
+grid()
+dev.off()
+
+pdf("arima_rel_err_density.pdf")
+plot(density(arima_relative_error))
+grid()
+dev.off()
+
+pdf("arima_errors_common.pdf")
+plot(arima_relative_error[,1],
+     ylab = "Blad wzgledny [%]",
+     pch = 20,
+     ylim=c(round(min(arima_relative_error))-1, round(max(arima_relative_error)) +1))
+for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
+points(arima_relative_error[,i],
        pch = 20)
 }
 grid()
