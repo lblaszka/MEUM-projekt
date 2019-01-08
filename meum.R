@@ -18,7 +18,6 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     tmp_ts = append(as.numeric(unlist(na.omit(NN3.A[i]))),
                     as.numeric(unlist(na.omit(NN3.A.cont[i]))))
 
-
     # Create input data features for XGBoost
     month_in_year = 0:(length(tmp_ts)-1) %% 12
 
@@ -65,6 +64,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 }
 
+# XGBoost
 print(typeof(xgb_relative_error))
 
 pdf("xgb_rel_err_boxplot.pdf")
@@ -90,7 +90,7 @@ points(xgb_relative_error[,i],
 grid()
 dev.off()
 
-#ARIMA
+# ARIMA
 arima_relative_error = data.matrix( arima_relative_error )
 pdf("arima_rel_err_boxplot.pdf")
 boxplot(as.vector(arima_relative_error),
