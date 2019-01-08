@@ -12,6 +12,7 @@ TEST_DATA_LENGTH = 18
 DEBUG = TRUE
 
 dir.create("output", showWarnings = FALSE)
+dir.create("output/arima", showWarnings = FALSE)
 
 # Load NN3 ts
 data(NN3.A, NN3.A.cont)
@@ -55,7 +56,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         xgb_relative_error = cbind(xgb_error)
     }
 
-    #ARIMA
+    # ARIMA
     arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
     arima_error = (arima_forecast - NN3.A.cont[i] ) / NN3.A.cont[i]
 
@@ -65,26 +66,37 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         arima_relative_error = cbind(arima_error)
     }
 
-    #Plot forecases
+    # Plot forecasts
     y_min = min( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
     y_max = max( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
-    svg( paste('./output/',i,'.svg', sep="") )
-    plot( NULL, ylim = c(y_min, y_max ), xlim=c(1,18), ylab="value", xlab=NULL, main=paste('NN3:',i ) )
-    lines( NN3.A.cont[i][,1], col="black", lwd= )	
+    svg(paste('./output/arima/',i,'.svg', sep=""))
+    plot(NULL,
+         ylim = c(y_min, y_max ),
+         xlim = c(1,18),
+         ylab = "value",
+         xlab=NULL,
+         main=paste('NN3:', i))
+    grid()
+    lines( NN3.A.cont[i][,1], col="black", lwd= )
     lines( arima_forecast, col="blue" )
     lines( xgb_forecast, col="red" )
-    legend(1, y_max, legend=c("cont", "ARIMA","XGBOOST"), col=c("black","blue","red"), lty=1:1 )
+    legend(1, y_max, legend=c("cont", "ARIMA","XGBOOST"), col=c("black","blue","red"), lty=1:1)
     dev.off()
 
-    #Plot errors
+    # Plot errors
     y_min = min( c(arima_error[,1], xgb_error ) )
     y_max = max( c(arima_error[,1], xgb_error ) )
-    svg( paste('./output/',i,'-ERROR.svg', sep="") )
-    plot( NULL, ylim = c(y_min, y_max ), xlim=c(1,18), ylab="error", xlab=NULL, main=paste('NN3:',i,"Error" ) )
+    svg( paste('./output/arima/',i,'-ERROR.svg', sep="") )
+    plot(NULL,
+         ylim = c(y_min, y_max ),
+         xlim = c(1,18), ylab="error",
+         xlab=NULL,
+         main=paste('NN3:',i,"Error"))
+    grid()
     abline(h=0)
     lines( arima_error[,1], col="blue" )
     lines( xgb_error, col="red" )
-    legend(1, y_max, legend=c("ARIMA error","XGBOOST error"), col=c("blue","red"), lty=1:1 )
+    legend(1, y_max, legend=c("ARIMA error","XGBOOST error"), col=c("blue","red"), lty=1:1)
     dev.off()
 }
 
