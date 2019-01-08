@@ -64,6 +64,28 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     } else {
         arima_relative_error = cbind(arima_error)
     }
+
+    #Plot forecases
+    y_min = min( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
+    y_max = max( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
+    svg( paste('./output/',i,'.svg', sep="") )
+    plot( NULL, ylim = c(y_min, y_max ), xlim=c(1,18), ylab="value", xlab=NULL, main=paste('NN3:',i ) )
+    lines( NN3.A.cont[i][,1], col="black", lwd= )	
+    lines( arima_forecast, col="blue" )
+    lines( xgb_forecast, col="red" )
+    legend(1, y_max, legend=c("cont", "ARIMA","XGBOOST"), col=c("black","blue","red"), lty=1:1 )
+    dev.off()
+
+    #Plot errors
+    y_min = min( c(arima_error[,1], xgb_error ) )
+    y_max = max( c(arima_error[,1], xgb_error ) )
+    svg( paste('./output/',i,'-ERROR.svg', sep="") )
+    plot( NULL, ylim = c(y_min, y_max ), xlim=c(1,18), ylab="error", xlab=NULL, main=paste('NN3:',i,"Error" ) )
+    abline(h=0)
+    lines( arima_error[,1], col="blue" )
+    lines( xgb_error, col="red" )
+    legend(1, y_max, legend=c("ARIMA error","XGBOOST error"), col=c("blue","red"), lty=1:1 )
+    dev.off()
 }
 
 # XGBoost
