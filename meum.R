@@ -11,6 +11,8 @@ TEST_DATA_LENGTH = 18
 
 DEBUG = TRUE
 
+dir.create("output", showWarnings = FALSE)
+
 # Load NN3 ts
 data(NN3.A, NN3.A.cont)
 
@@ -67,18 +69,18 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
 # XGBoost
 print(typeof(xgb_relative_error))
 
-pdf("xgb_rel_err_boxplot.pdf")
+pdf("output/xgb_rel_err_boxplot.pdf")
 boxplot(as.vector(xgb_relative_error),
         ylab = "Blad wzgledny [%]")
 grid()
 dev.off()
 
-pdf("xgb_rel_err_density.pdf")
+pdf("output/xgb_rel_err_density.pdf")
 plot(density(xgb_relative_error))
 grid()
 dev.off()
 
-pdf("xgb_errors_common.pdf")
+pdf("output/xgb_errors_common.pdf")
 plot(xgb_relative_error[,1],
      ylab = "Blad wzgledny [%]",
      pch = 20,
@@ -92,18 +94,18 @@ dev.off()
 
 # ARIMA
 arima_relative_error = data.matrix( arima_relative_error )
-pdf("arima_rel_err_boxplot.pdf")
+pdf("output/arima_rel_err_boxplot.pdf")
 boxplot(as.vector(arima_relative_error),
         ylab = "Blad wzgledny [%]")
 grid()
 dev.off()
 
-pdf("arima_rel_err_density.pdf")
+pdf("output/arima_rel_err_density.pdf")
 plot(density(arima_relative_error))
 grid()
 dev.off()
 
-pdf("arima_errors_common.pdf")
+pdf("output/arima_errors_common.pdf")
 plot(arima_relative_error[,1],
      ylab = "Blad wzgledny [%]",
      pch = 20,
