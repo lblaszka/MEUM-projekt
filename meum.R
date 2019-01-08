@@ -66,6 +66,15 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         arima_relative_error = cbind(arima_error)
     }
 
+    # Plot time series
+    y_min = min(tmp_ts)
+    y_max = max(tmp_ts)
+    svg(paste('./output/ts/',i,'.svg', sep=""))
+    plot(NULL, xlim = c(1, length(tmp_ts)), ylim = c(y_min, y_max), ylab = "Wartosc")
+    lines(tmp_ts, col = "black")
+    grid()
+    dev.off()
+
     # Plot forecasts
     y_min = min( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
     y_max = max( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
@@ -118,6 +127,12 @@ boxplot(as.vector(xgb_relative_error),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
+svg("output/xgb_rel_err_boxplot_zoom.svg")
+boxplot(as.vector(xgb_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
 
 svg("output/xgb_rel_err_density.svg")
 plot(density(xgb_relative_error))
@@ -140,6 +155,12 @@ grid()
 arima_relative_error = data.matrix( arima_relative_error )
 svg("output/arima_rel_err_boxplot.svg")
 boxplot(as.vector(arima_relative_error),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/arima_rel_err_boxplot_zoom.svg")
+boxplot(as.vector(arima_relative_error),
+        ylim = c(-50, 50),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
