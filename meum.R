@@ -9,9 +9,11 @@ library(forecast)
 NUMBER_OF_NN3_TIME_SERIES = 111
 TEST_DATA_LENGTH = 18
 
-DEBUG = TRUE
+DEBUG = FALSE
+USE_MARIMAPRED = TRUE
 
 dir.create("output", showWarnings = FALSE)
+dir.create("output/ts", showWarnings = FALSE)
 
 # Load NN3 ts
 data(NN3.A, NN3.A.cont)
@@ -25,9 +27,11 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
 
     # Relative strength index
     rsi = RSI(tmp_ts, n = 3, maType = "WMA")
+    rsi = c(NA, head(rsi, -1))
     # Potential need to create lag in the features to avoid look-ahead bias?
 
     input_data = cbind(tmp_ts, month_in_year, rsi)
+    input_data = na.omit(input_data)
     colnames(input_data) = c("Data", "Month", "RSI")
 
     if (DEBUG) {
@@ -47,7 +51,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     xgb_model = xgboost(data=x_learn, label=y_learn, nround=5, objective="reg:linear")
     xgb_forecast = predict(xgb_model, x_test)
 
-    xgb_error = (xgb_forecast - y_test) / y_test
+    xgb_error = (xgb_forecast - y_test) / y_test * 100
 
     if (exists("xgb_relative_error")) {
         xgb_relative_error = cbind(xgb_relative_error, xgb_error)
@@ -55,9 +59,16 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         xgb_relative_error = cbind(xgb_error)
     }
 
-    #ARIMA
-    arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
-    arima_error = (arima_forecast - NN3.A.cont[i] ) / NN3.A.cont[i]
+    # ARIMA
+    if (USE_MARIMAPRED) {
+        arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
+    } else {
+        arima_model = auto.arima(NN3.A[i])
+        arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH)
+        arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
+    }
+
+    arima_error = (arima_forecast - NN3.A.cont[i] ) / NN3.A.cont[i] * 100
 
     if (exists("arima_relative_error")) {
         arima_relative_error = cbind(arima_relative_error, arima_error)
@@ -65,76 +76,140 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         arima_relative_error = cbind(arima_error)
     }
 
-    #Plot forecases
-    y_min = min( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
-    y_max = max( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
-    svg( paste('./output/',i,'.svg', sep="") )
-    plot( NULL, ylim = c(y_min, y_max ), xlim=c(1,18), ylab="value", xlab=NULL, main=paste('NN3:',i ) )
-    lines( NN3.A.cont[i][,1], col="black", lwd= )	
-    lines( arima_forecast, col="blue" )
-    lines( xgb_forecast, col="red" )
-    legend(1, y_max, legend=c("cont", "ARIMA","XGBOOST"), col=c("black","blue","red"), lty=1:1 )
+    # Plot time series
+    y_min = min(tmp_ts)
+    y_max = max(tmp_ts)
+    svg(paste('./output/ts/',i,'.svg', sep=""))
+    plot(NULL, xlim = c(1, length(tmp_ts)), ylim = c(y_min, y_max), ylab = "Wartosc")
+    lines(tmp_ts, col = "black")
+    grid()
     dev.off()
 
-    #Plot errors
+    # Plot forecasts
+    y_min = min( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
+    y_max = max( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
+    svg(paste('./output/ts/',i,'_forecast.svg', sep=""))
+    plot(NULL,
+         ylim = c(y_min, y_max ),
+         xlim = c(1,18),
+         ylab = "Przewidywana wartosc",
+         xlab=NULL,
+         main=paste('NN3:', i))
+    grid()
+    lines( NN3.A.cont[i][,1], col="black", lwd= )
+    lines( arima_forecast, col="blue" )
+    lines( xgb_forecast, col="red" )
+    legend(1, y_max, legend=c("cont", "ARIMA","XGBOOST"), col=c("black","blue","red"), lty=1:1)
+    dev.off()
+
+    # Plot errors
     y_min = min( c(arima_error[,1], xgb_error ) )
     y_max = max( c(arima_error[,1], xgb_error ) )
-    svg( paste('./output/',i,'-ERROR.svg', sep="") )
-    plot( NULL, ylim = c(y_min, y_max ), xlim=c(1,18), ylab="error", xlab=NULL, main=paste('NN3:',i,"Error" ) )
+    svg( paste('./output/ts/',i,'-ERROR.svg', sep="") )
+    plot(NULL,
+         ylim = c(y_min, y_max ),
+         xlim = c(1,18), ylab = "Blad wzgledny [%]",
+         xlab=NULL,
+         main=paste('NN3:',i,"Error"))
+    grid()
     abline(h=0)
     lines( arima_error[,1], col="blue" )
     lines( xgb_error, col="red" )
-    legend(1, y_max, legend=c("ARIMA error","XGBOOST error"), col=c("blue","red"), lty=1:1 )
+    legend(1, y_max, legend=c("ARIMA","XGBOOST"), col=c("blue","red"), lty=1:1)
     dev.off()
 }
 
-# XGBoost
-print(typeof(xgb_relative_error))
+cat("ARIMA sredni blad wzlgedny [%], odchylenie standardowe, max, min \n")
+print(mean(as.numeric(unlist(arima_relative_error))))
+print(sd(as.numeric(unlist(arima_relative_error))))
+print(max(abs(as.numeric(unlist(arima_relative_error)))))
+print(min(abs(as.numeric(unlist(arima_relative_error)))))
 
-pdf("output/xgb_rel_err_boxplot.pdf")
+cat("XGBoost sredni blad wzlgedny [%], odchylenie standardowe, max, min \n")
+print(mean(xgb_relative_error))
+print(sd(xgb_relative_error))
+print(max(abs(xgb_relative_error)))
+print(min(abs(xgb_relative_error)))
+
+# XGBoost
+svg("output/xgb_rel_err_boxplot.svg")
 boxplot(as.vector(xgb_relative_error),
         ylab = "Blad wzgledny [%]")
 grid()
-dev.off()
+#dev.off()
+svg("output/xgb_rel_err_boxplot_zoom.svg")
+boxplot(as.vector(xgb_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/xgb_rel_err_boxplot_index.svg")
+boxplot(t(xgb_relative_error),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/xgb_rel_err_boxplot_zoom_index.svg")
+boxplot(t(xgb_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
 
-pdf("output/xgb_rel_err_density.pdf")
+svg("output/xgb_rel_err_density.svg")
 plot(density(xgb_relative_error))
 grid()
-dev.off()
+#dev.off()
 
-pdf("output/xgb_errors_common.pdf")
+svg("output/xgb_errors_common.svg")
 plot(xgb_relative_error[,1],
      ylab = "Blad wzgledny [%]",
      pch = 20,
      ylim=c(round(min(xgb_relative_error))-1, round(max(xgb_relative_error)) +1))
 for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-points(xgb_relative_error[,i],
-       pch = 20)
+    points(xgb_relative_error[,i],
+           pch = 20)
 }
 grid()
-dev.off()
+#dev.off()
 
 # ARIMA
 arima_relative_error = data.matrix( arima_relative_error )
-pdf("output/arima_rel_err_boxplot.pdf")
+svg("output/arima_rel_err_boxplot.svg")
 boxplot(as.vector(arima_relative_error),
         ylab = "Blad wzgledny [%]")
 grid()
-dev.off()
+#dev.off()
+svg("output/arima_rel_err_boxplot_zoom.svg")
+boxplot(as.vector(arima_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/arima_rel_err_boxplot_index.svg")
+boxplot(t(arima_relative_error),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/arima_rel_err_boxplot_zoom_index.svg")
+boxplot(t(arima_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
 
-pdf("output/arima_rel_err_density.pdf")
+svg("output/arima_rel_err_density.svg")
 plot(density(arima_relative_error))
 grid()
-dev.off()
+#dev.off()
 
-pdf("output/arima_errors_common.pdf")
+svg("output/arima_errors_common.svg")
 plot(arima_relative_error[,1],
      ylab = "Blad wzgledny [%]",
      pch = 20,
      ylim=c(round(min(arima_relative_error))-1, round(max(arima_relative_error)) +1))
 for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-points(arima_relative_error[,i],
-       pch = 20)
+    points(arima_relative_error[,i],
+           pch = 20)
 }
 grid()
-dev.off()
+#dev.off()
