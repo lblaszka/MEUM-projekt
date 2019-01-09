@@ -133,6 +133,17 @@ boxplot(as.vector(xgb_relative_error),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
+svg("output/xgb_rel_err_boxplot_index.svg")
+boxplot(t(xgb_relative_error),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/xgb_rel_err_boxplot_zoom_index.svg")
+boxplot(t(xgb_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
 
 svg("output/xgb_rel_err_density.svg")
 plot(density(xgb_relative_error))
@@ -160,6 +171,17 @@ grid()
 #dev.off()
 svg("output/arima_rel_err_boxplot_zoom.svg")
 boxplot(as.vector(arima_relative_error),
+        ylim = c(-50, 50),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/arima_rel_err_boxplot_index.svg")
+boxplot(t(arima_relative_error),
+        ylab = "Blad wzgledny [%]")
+grid()
+#dev.off()
+svg("output/arima_rel_err_boxplot_zoom_index.svg")
+boxplot(t(arima_relative_error),
         ylim = c(-50, 50),
         ylab = "Blad wzgledny [%]")
 grid()
