@@ -27,6 +27,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
 
     # Relative strength index
     rsi = RSI(tmp_ts, n = 3, maType = "WMA")
+    rsi = c(NA, head(rsi, -1))
     # Potential need to create lag in the features to avoid look-ahead bias?
 
     input_data = cbind(tmp_ts, month_in_year, rsi)
