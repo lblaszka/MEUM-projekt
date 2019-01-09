@@ -10,6 +10,7 @@ NUMBER_OF_NN3_TIME_SERIES = 111
 TEST_DATA_LENGTH = 18
 
 DEBUG = FALSE
+USE_MARIMAPRED = TRUE
 
 dir.create("output", showWarnings = FALSE)
 dir.create("output/ts", showWarnings = FALSE)
@@ -57,7 +58,14 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     # ARIMA
-    arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
+    if (USE_MARIMAPRED) {
+        arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
+    } else {
+        arima_model = auto.arima(NN3.A[i])
+        arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH)
+        arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
+    }
+
     arima_error = (arima_forecast - NN3.A.cont[i] ) / NN3.A.cont[i] * 100
 
     if (exists("arima_relative_error")) {
