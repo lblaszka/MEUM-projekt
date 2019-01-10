@@ -67,41 +67,29 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
     } else {
         if(PREDICT_SINGLE_POINT) {
-            arima_forecast_oneFront = NULL
+            arima_forecast_oneFront = 1:TEST_DATA_LENGTH
             connected_ts = c( na.omit( NN3.A[i][,1] ),NN3.A.cont[i][,1]  )
             for (j in 1:TEST_DATA_LENGTH) {
-                ts_end = learn_data_length+j
-                ts <- ts( connected_ts[1:ts_end] )
+                ts_end = learn_data_length + j
+                ts <- ts(connected_ts[1:ts_end])
                 nobs <- length(ts)
                 reg <- cbind(1:nobs)
                 xreg = ts(reg,start=1)
-                newreg <- cbind(nobs+1:nobs,NULL)
-                arima_model = auto.arima( ts, xreg=xreg )
-                arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg=xreg)
+                newreg <- ts_end + 1
+                arima_model = auto.arima(ts, xreg = xreg)
+                arima_forecast_all = forecast(arima_model, h = 1, xreg = newreg)
                 arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
-                arima_forecast_oneFront=c(arima_forecast_oneFront,
-                                          arima_forecast[learn_data_length+j])
+                arima_forecast_oneFront[j] = arima_forecast
             }
-            arima_forecast=arima_forecast_oneFront
+            arima_forecast = arima_forecast_oneFront
         } else {
-            ts <- ts( NN3.A[i] )
+            ts <- ts(NN3.A[i])
             nobs <- length(ts)
-            reg <- cbind(1:nobs)
-            xreg = ts(reg,start=1)
-            newreg <- cbind(nobs+1:nobs, NULL)
+            xreg <- cbind(1:nobs)
+            newreg <- (nobs+1):(nobs+TEST_DATA_LENGTH)
             arima_model = auto.arima(ts, xreg = xreg)
-            arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg = xreg)
+            arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg = newreg)
             arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
-            #cat(" AAAAAAAAAAAAAAAAAAAAAAAAAA\nldl: ")
-            #str( learn_data_length )
-            #cat(" ts: ")
-            #str( ts )
-            #cat(" nobs: ")
-            #str( nobs )
-            #cat(" xreg: ")
-            #str( xreg )
-            #cat(" arima_forecast: ")
-            #str( arima_forecast )
         }
     }
 
