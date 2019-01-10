@@ -11,7 +11,7 @@ TEST_DATA_LENGTH = 18
 DEBUG = FALSE
 USE_MARIMAPRED = FALSE
 # Przewiduje 1 do przodu lecz na podstawie nowego modelu.
-PREDICT_SINGLE_POINT = FALSE
+PREDICT_SINGLE_POINT = TRUE
 
 BOXPLOT_ZOOM = 70
 
@@ -22,8 +22,9 @@ dir.create("output/ts", showWarnings = FALSE)
 data(NN3.A, NN3.A.cont)
 
 for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
-    tmp_ts = append(as.numeric(unlist(na.omit(NN3.A[i]))),
-                    as.numeric(unlist(na.omit(NN3.A.cont[i]))))
+    tmp_ts_learn = as.numeric(unlist(na.omit(NN3.A[i])))
+    tmp_ts_test = as.numeric(unlist(na.omit(NN3.A.cont[i])))
+    tmp_ts = append(tmp_ts_learn, tmp_ts_test)
 
     # Create input data features for XGBoost
     month_in_year = 0:(length(tmp_ts)-1) %% 12
@@ -68,10 +69,9 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     } else {
         if(PREDICT_SINGLE_POINT) {
             arima_forecast_oneFront = 1:TEST_DATA_LENGTH
-            connected_ts = c( na.omit( NN3.A[i][,1] ),NN3.A.cont[i][,1]  )
             for (j in 1:TEST_DATA_LENGTH) {
                 ts_end = learn_data_length + j
-                ts <- ts(connected_ts[1:ts_end])
+                ts <- ts(tmp_ts[1:ts_end])
                 nobs <- length(ts)
                 reg <- cbind(1:nobs)
                 xreg = ts(reg,start=1)
@@ -83,11 +83,10 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
             }
             arima_forecast = arima_forecast_oneFront
         } else {
-            ts <- ts(NN3.A[i])
-            nobs <- length(ts)
+            nobs <- length(tmp_ts)
             xreg <- cbind(1:nobs)
             newreg <- (nobs+1):(nobs+TEST_DATA_LENGTH)
-            arima_model = auto.arima(ts, xreg = xreg)
+            arima_model = auto.arima(tmp_ts, xreg = xreg)
             arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg = newreg)
             arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
         }
