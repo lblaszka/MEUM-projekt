@@ -12,7 +12,7 @@ TEST_DATA_LENGTH = 18
 DEBUG = FALSE
 USE_MARIMAPRED = FALSE
 # Przewiduje 1 do przodu lecz na podstawie nowego modelu.
-DEBUG_TWO = TRUE
+PREDICT_SINGLE_POINT = TRUE
 
 dir.create("output", showWarnings = FALSE)
 dir.create("output/ts", showWarnings = FALSE)
@@ -65,7 +65,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     if (USE_MARIMAPRED) {
         arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
     } else {
-        if(DEBUG_TWO) {
+        if(PREDICT_SINGLE_POINT) {
             arima_forecast_oneFront = NULL
             connected_ts = c( na.omit( NN3.A[i][,1] ),NN3.A.cont[i][,1]  )
             for( j in 1:18 ) {
