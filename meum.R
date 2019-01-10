@@ -29,8 +29,8 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
 
     # Relative strength index
     rsi = RSI(tmp_ts, n = 3, maType = "WMA")
+    # Create lag in the features to avoid look-ahead bias
     rsi = c(NA, head(rsi, -1))
-    # Potential need to create lag in the features to avoid look-ahead bias?
 
     input_data = cbind(tmp_ts, month_in_year, rsi)
     input_data = na.omit(input_data)
@@ -40,7 +40,8 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
         print(input_data)
     }
 
-    learn_data_length = length(tmp_ts) - TEST_DATA_LENGTH
+
+    learn_data_length = dim(input_data)[1] - TEST_DATA_LENGTH
     learn_data = input_data[1:learn_data_length,]
     test_data = input_data[(learn_data_length+1):nrow(input_data),]
 
@@ -91,16 +92,16 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
             arima_model = auto.arima(ts, xreg = xreg)
             arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg = xreg)
             arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
-            cat(" AAAAAAAAAAAAAAAAAAAAAAAAAA\nldl: ")
-            str( learn_data_length )
-            cat(" ts: ")
-            str( ts )
-            cat(" nobs: ")
-            str( nobs )
+            #cat(" AAAAAAAAAAAAAAAAAAAAAAAAAA\nldl: ")
+            #str( learn_data_length )
+            #cat(" ts: ")
+            #str( ts )
+            #cat(" nobs: ")
+            #str( nobs )
             #cat(" xreg: ")
             #str( xreg )
-            cat(" arima_forecast: ")
-            str( arima_forecast )
+            #cat(" arima_forecast: ")
+            #str( arima_forecast )
         }
     }
 
