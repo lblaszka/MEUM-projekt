@@ -14,6 +14,8 @@ USE_MARIMAPRED = FALSE
 # Przewiduje 1 do przodu lecz na podstawie nowego modelu.
 PREDICT_SINGLE_POINT = FALSE
 
+BOXPLOT_ZOOM = 70
+
 dir.create("output", showWarnings = FALSE)
 dir.create("output/ts", showWarnings = FALSE)
 
@@ -176,7 +178,7 @@ grid()
 #dev.off()
 svg("output/xgb_rel_err_boxplot_zoom.svg")
 boxplot(as.vector(xgb_relative_error),
-        ylim = c(-50, 50),
+        ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
@@ -187,7 +189,7 @@ grid()
 #dev.off()
 svg("output/xgb_rel_err_boxplot_zoom_index.svg")
 boxplot(t(xgb_relative_error),
-        ylim = c(-50, 50),
+        ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
@@ -218,7 +220,7 @@ grid()
 #dev.off()
 svg("output/arima_rel_err_boxplot_zoom.svg")
 boxplot(as.vector(arima_relative_error),
-        ylim = c(-50, 50),
+        ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
@@ -229,7 +231,7 @@ grid()
 #dev.off()
 svg("output/arima_rel_err_boxplot_zoom_index.svg")
 boxplot(t(arima_relative_error),
-        ylim = c(-50, 50),
+        ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
         ylab = "Blad wzgledny [%]")
 grid()
 #dev.off()
