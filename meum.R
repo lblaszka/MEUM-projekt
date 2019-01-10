@@ -5,7 +5,6 @@ library(TSPred)
 library(tseries)
 library(forecast)
 
-
 NUMBER_OF_NN3_TIME_SERIES = 111
 TEST_DATA_LENGTH = 18
 
@@ -41,7 +40,6 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     if (DEBUG) {
         print(input_data)
     }
-
 
     learn_data_length = dim(input_data)[1] - TEST_DATA_LENGTH
     learn_data = input_data[1:learn_data_length,]
