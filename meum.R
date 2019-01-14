@@ -177,132 +177,100 @@ print(sd(xgb_relative_error))
 print(max(abs(xgb_relative_error)))
 print(min(abs(xgb_relative_error)))
 
-# XGBoost relative errors
-svg("output/xgb_rel_err_boxplot.svg")
-boxplot(as.vector(xgb_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-
-if(PLOT_BOXPLOT_ZOOM) {
-    svg("output/xgb_rel_err_boxplot_zoom.svg")
-    boxplot(as.vector(xgb_relative_error),
-            ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
-            ylab = "Blad wzgledny [%]")
+plot_forecast_errors <- function(error, relative_error, name) {
+    relative_error = data.matrix(relative_error)
+    
+    svg(paste('output/', name, '_rel_err.svg'))
+    plot(relative_error[,1],
+         ylab = "Blad wzgledny [%]",
+         pch = 20,
+         ylim=c(round(min(relative_error))-1, round(max(relative_error)) +1),
+         main = name)
+    for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
+        points(relative_error[,i],
+               pch = 20)
+    }
+    grid()
+    
+    svg(paste('output/', name, '_rel_err_boxplot.svg'))
+    boxplot(as.vector(relative_error), ylab = "Blad wzgledny [%]", main = name)
+    grid()
+    
+    if(PLOT_BOXPLOT_ZOOM) {
+        svg(paste('output/', name, '_rel_err_boxplot_zoom.svg'))
+        boxplot(as.vector(relative_error),
+                ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
+                ylab = "Blad wzgledny [%]",
+                main = name)
+        grid()
+    }
+    
+    svg(paste('output/', name, '_rel_err_boxplot_index.svg'))
+    boxplot(t(relative_error), ylab = "Blad wzgledny [%]", main = name)
+    grid()
+    
+    if (PLOT_BOXPLOT_ZOOM) {
+        svg(paste('output/', name, '_rel_err_boxplot_zoom_index.svg'))
+        boxplot(t(relative_error),
+                ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
+                ylab = "Blad wzgledny [%]",
+                main = name)
+        grid()
+    }
+    
+    svg(paste('output/', name, '_rel_err_density.svg'))
+    plot(density(relative_error), main = name)
+    grid()
+    
+    # ARIMA absolute errors
+    error = data.matrix(error)
+    
+    svg(paste('output/', name, '_err.svg'))
+    plot(error[,1],
+         ylab = "Blad bezwzgledny",
+         pch = 20,
+         ylim=c(round(min(error))-1, round(max(error)) +1),
+         main = name)
+    for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
+        points(error[,i],
+               pch = 20)
+    }
+    grid()
+    
+    svg(paste('output/', name, '_err_boxplot.svg'))
+    boxplot(as.vector(error),
+            ylab = "Blad bezwzgledny",
+            main = name)
+    grid()
+    
+    if(PLOT_BOXPLOT_ZOOM) {
+        svg(paste('output/', name, '_err_boxplot_zoom.svg'))
+        boxplot(as.vector(error),
+                ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
+                ylab = "Blad bezwzgledny [%]",
+                main = name)
+        grid()
+    }
+    
+    svg(paste('output/', name, '_err_boxplot_index.svg'))
+    boxplot(t(error),
+            ylab = "Blad bezwzgledny",
+            main = name)
+    grid()
+    
+    if(PLOT_BOXPLOT_ZOOM) {
+        svg('output/', name, '_err_boxplot_zoom_index.svg')
+        boxplot(t(error),
+                ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
+                ylab = "Blad bezwzgledny",
+                main = name)
+        grid()
+    }
+    
+    svg(paste('output/', name, '_err_density.svg'))
+    plot(density(error), main = name)
     grid()
 }
 
-svg("output/xgb_rel_err_boxplot_index.svg")
-boxplot(t(xgb_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-
-if(PLOT_BOXPLOT_ZOOM) {
-    svg("output/xgb_rel_err_boxplot_zoom_index.svg")
-    boxplot(t(xgb_relative_error),
-            ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
-            ylab = "Blad wzgledny [%]")
-    grid()
-}
-
-svg("output/xgb_rel_err_density.svg")
-plot(density(xgb_relative_error))
-grid()
-
-svg("output/xgb_rel_err.svg")
-plot(xgb_relative_error[,1],
-     ylab = "Blad wzgledny [%]",
-     pch = 20,
-     ylim=c(round(min(xgb_relative_error))-1, round(max(xgb_relative_error)) +1))
-for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-    points(xgb_relative_error[,i],
-           pch = 20)
-}
-grid()
-
-# ARIMA relative errors
-arima_relative_error = data.matrix(arima_relative_error)
-
-svg("output/arima_rel_err.svg")
-plot(arima_relative_error[,1],
-     ylab = "Blad wzgledny [%]",
-     pch = 20,
-     ylim=c(round(min(arima_relative_error))-1, round(max(arima_relative_error)) +1))
-for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-    points(arima_relative_error[,i],
-           pch = 20)
-}
-grid()
-
-svg("output/arima_rel_err_boxplot.svg")
-boxplot(as.vector(arima_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-
-if(PLOT_BOXPLOT_ZOOM) {
-    svg("output/arima_rel_err_boxplot_zoom.svg")
-    boxplot(as.vector(arima_relative_error),
-            ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
-            ylab = "Blad wzgledny [%]")
-    grid()
-}
-
-svg("output/arima_rel_err_boxplot_index.svg")
-boxplot(t(arima_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-
-if(PLOT_BOXPLOT_ZOOM) {
-    svg("output/arima_rel_err_boxplot_zoom_index.svg")
-    boxplot(t(arima_relative_error),
-            ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
-            ylab = "Blad wzgledny [%]")
-    grid()
-}
-
-svg("output/arima_rel_err_density.svg")
-plot(density(arima_relative_error))
-grid()
-
-# ARIMA absolute errors
-arima_error = data.matrix(arima_error)
-
-svg("output/arima_err.svg")
-plot(arima_error[,1],
-     ylab = "Blad bezwzgledny",
-     pch = 20,
-     ylim=c(round(min(arima_error))-1, round(max(arima_error)) +1))
-for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-    points(arima_error[,i],
-           pch = 20)
-}
-grid()
-
-svg("output/arima_err_boxplot.svg")
-boxplot(as.vector(arima_error),
-        ylab = "Blad bezwzgledny")
-grid()
-
-if(PLOT_BOXPLOT_ZOOM) {
-    svg("output/arima_err_boxplot_zoom.svg")
-    boxplot(as.vector(arima_error),
-            ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
-            ylab = "Blad bezwzgledny [%]")
-    grid()
-}
-
-svg("output/arima_err_boxplot_index.svg")
-boxplot(t(arima_error),
-        ylab = "Blad bezwzgledny")
-grid()
-
-if(PLOT_BOXPLOT_ZOOM) {
-    svg("output/arima_err_boxplot_zoom_index.svg")
-    boxplot(t(arima_error),
-            ylim = c(-BOXPLOT_ZOOM, BOXPLOT_ZOOM),
-            ylab = "Blad bezwzgledny")
-    grid()
-}
-
-svg("output/arima_err_density.svg")
-plot(density(arima_error))
-grid()
+plot_forecast_errors(arima_error, arima_relative_error, 'arima')
+plot_forecast_errors(xgb_error, xgb_relative_error, 'xgb')
