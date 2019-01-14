@@ -8,7 +8,7 @@ library(forecast)
 NUMBER_OF_NN3_TIME_SERIES = 111
 TEST_DATA_LENGTH = 18
 
-SCALE_TS_TO_RANGE_1_2 = FALSE
+SCALE_TS_TO_RANGE_1_2 = TRUE
 
 DEBUG = FALSE
 USE_MARIMAPRED = FALSE
@@ -104,14 +104,14 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     arima_err = (arima_forecast - tail(tmp_ts, TEST_DATA_LENGTH))
-    arima_rel_err = (arima_forecast - y_test) / y_test * 100
+    arima_rel_err = arima_err / tail(tmp_ts, TEST_DATA_LENGTH) * 100
 
     if (exists("arima_relative_error")) {
         arima_error = cbind(arima_error, arima_err)
         arima_relative_error = cbind(arima_relative_error, arima_rel_err)
     } else {
         arima_error = cbind(arima_err)
-        arima_relative_error = cbind(arima_error)
+        arima_relative_error = cbind(arima_rel_err)
     }
 
     # Plot time series with forecasts
