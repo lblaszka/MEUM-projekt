@@ -43,28 +43,16 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     rsi = c(NA, head(rsi, -1))
 
     input_data = cbind(tmp_ts, month_in_year, rsi)
-    input_data = na.omit(input_data)
     colnames(input_data) = c("Data", "Month", "RSI")
 
     if (DEBUG) {
         print(input_data)
     }
 
-    learn_data_length = dim(input_data)[1] - TEST_DATA_LENGTH
-    learn_data = input_data[1:learn_data_length,]
-    test_data = input_data[(learn_data_length+1):nrow(input_data),]
-
-    # Split data training and test data into X and Y
-    x_learn = learn_data[,2:ncol(input_data)]
-    y_learn = learn_data[,1]
-    x_test = test_data[,2:ncol(input_data)]
-    y_test = test_data[,1]
-
-    xgb_model = xgboost(data=x_learn, label=y_learn, nround=5, objective="reg:linear")
-    xgb_forecast = predict(xgb_model, x_test)
-
-    xgb_err = (xgb_forecast - y_test)
-    xgb_rel_err = xgb_err / y_test * 100
+    xgb_res = xgb_wrapper(input_data, TEST_DATA_LENGTH)
+    xgb_forecast = xgb_res$'Forecast'
+    xgb_err = xgb_res$'Error'
+    xgb_rel_err = xgb_res$'Relative error'
 
     if (exists("xgb_relative_error")) {
         xgb_error = cbind(xgb_error, xgb_err)

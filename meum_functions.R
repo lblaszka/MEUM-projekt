@@ -5,6 +5,32 @@ library(TSPred)
 library(tseries)
 library(forecast)
 
+xgb_wrapper <- function(input_data, test_data_len) {
+    input_data = na.omit(input_data)
+
+    learn_data_length = dim(input_data)[1] - test_data_len
+    learn_data = input_data[1:learn_data_length,]
+    test_data = input_data[(learn_data_length+1):nrow(input_data),]
+
+    # Split data training and test data into X and Y
+    x_learn = learn_data[,2:ncol(input_data)]
+    y_learn = learn_data[,1]
+    x_test = test_data[,2:ncol(input_data)]
+    y_test = test_data[,1]
+
+    xgb_model = xgboost(data=x_learn, label=y_learn, nround=5, objective="reg:linear")
+    xgb_forecast = predict(xgb_model, x_test)
+
+    xgb_err = (xgb_forecast - y_test)
+    xgb_rel_err = xgb_err / y_test * 100
+
+    ret <- list("Forecast" = xgb_forecast,
+                "Error" = xgb_err,
+                "Relative error" = xgb_rel_err)
+
+    return(ret)
+}
+
 plot_forecast_errors <- function(error, relative_error, name) {
     relative_error = data.matrix(relative_error)
     
