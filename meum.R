@@ -4,6 +4,7 @@ library(xgboost)
 library(TSPred)
 library(tseries)
 library(forecast)
+library(data.table)
 source('meum_functions.R')
 
 NUMBER_OF_NN3_TIME_SERIES = 111
@@ -18,6 +19,8 @@ PREDICT_SINGLE_POINT = FALSE
 
 PLOT_BOXPLOT_ZOOM = FALSE
 BOXPLOT_ZOOM = 70
+
+PACF_LAG_THRESHOLD = 0.1
 
 dir.create("output", showWarnings = FALSE)
 dir.create("output/ts", showWarnings = FALSE)
@@ -42,14 +45,14 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     # Create lag in the features to avoid look-ahead bias
     rsi = c(NA, head(rsi, -1))
 
-    input_data = cbind(tmp_ts, month_in_year, rsi)
-    colnames(input_data) = c("Data", "Month", "RSI")
+    xgb_input_data = cbind(tmp_ts, month_in_year, rsi)
+    colnames(xgb_input_data) = c("Data", "Month", "RSI")
 
     if (DEBUG) {
-        print(input_data)
+        print(xgb_input_data)
     }
 
-    xgb_res = xgb_wrapper(input_data, TEST_DATA_LENGTH)
+    xgb_res = xgb_wrapper(xgb_input_data, TEST_DATA_LENGTH)
     xgb_forecast = xgb_res$'Forecast'
     xgb_err = xgb_res$'Error'
     xgb_rel_err = xgb_res$'Relative error'
@@ -63,6 +66,29 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     # XGBoost based on PACF
+    xgb_pacf_input_data = cbind(tmp_ts)
+
+    tmp_pacf = pacf(tmp_ts_learn, lag = 12)
+    tmp_pacf = tmp_pacf$acf
+    for (pacf_i in 1:12) {
+        if (abs(tmp_pacf[pacf_i]) >= PACF_LAG_THRESHOLD) {
+            tmp_ts_lagged = shift(tmp_ts, pacf_i)
+            xgb_pacf_input_data = cbind(xgb_pacf_input_data, tmp_ts_lagged)
+        }
+    }
+
+    xgb_pacf_res = xgb_wrapper(xgb_pacf_input_data, TEST_DATA_LENGTH)
+    xgb_pacf_forecast = xgb_pacf_res$'Forecast'
+    xgb_pacf_err = xgb_pacf_res$'Error'
+    xgb_pacf_rel_err = xgb_pacf_res$'Relative error'
+
+    if (exists("xgb_pacf_relative_error")) {
+        xgb_pacf_error = cbind(xgb_pacf_error, xgb_pacf_err)
+        xgb_pacf_relative_error = cbind(xgb_pacf_relative_error, xgb_pacf_rel_err)
+    } else {
+        xgb_pacf_error = cbind(xgb_pacf_err)
+        xgb_pacf_relative_error = cbind(xgb_pacf_rel_err)
+    }
 
     # ARIMA
     if (USE_MARIMAPRED) {
@@ -118,10 +144,11 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     tmp_x = tmp_x + length(tmp_ts_learn)
     lines(x = tmp_x, y = arima_forecast, col = "blue")
     lines(x = tmp_x, y = xgb_forecast, col = "red")
+    lines(x = tmp_x, y = xgb_pacf_forecast, col = "green")
     grid()
     legend(1,
            y_max,
-           legend=c("Szereg czasowy", "ARIMA","XGBOOST"),
+           legend=c("Szereg czasowy", "ARIMA","XGBoost", "XGBoost PACF"),
            col=c("black","blue","red"),
            lty = 1:1)
     dev.off()
@@ -140,7 +167,8 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     abline(h=0)
     lines(arima_rel_err, col = "blue")
     lines(xgb_rel_err, col = "red")
-    legend(1, y_max, legend=c("ARIMA","XGBOOST"), col=c("blue","red"), lty=1:1)
+    lines(xgb_pacf_rel_err, col = "green")
+    legend(1, y_max, legend=c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red"), lty=1:1)
     dev.off()
 }
 
@@ -166,5 +194,17 @@ print(sd(xgb_relative_error))
 print(max(abs(xgb_relative_error)))
 print(min(abs(xgb_relative_error)))
 
-plot_forecast_errors(arima_error, arima_relative_error, 'arima')
-plot_forecast_errors(xgb_error, xgb_relative_error, 'xgb')
+cat("XGBoost PACF sredni blad, odchylenie standardowe, max, min\n")
+print(mean(xgb_pacf_error))
+print(sd(xgb_pacf_error))
+print(max(abs(xgb_pacf_error)))
+print(min(abs(xgb_pacf_error)))
+cat("XGBoost PACF sredni blad wzlgedny [%], odchylenie standardowe, max, min\n")
+print(mean(xgb_pacf_relative_error))
+print(sd(xgb_pacf_relative_error))
+print(max(abs(xgb_pacf_relative_error)))
+print(min(abs(xgb_pacf_relative_error)))
+
+plot_forecast_errors(arima_error, arima_relative_error, 'ARIMA')
+plot_forecast_errors(xgb_error, xgb_relative_error, 'XGB')
+plot_forecast_errors(xgb_pacf_error, xgb_pacf_relative_error, 'XGB_PACF')
