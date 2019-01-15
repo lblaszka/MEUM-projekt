@@ -131,8 +131,8 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     # Plot time series with forecasts
-    y_min = min(c(tmp_ts, arima_forecast, xgb_forecast))
-    y_max = max(c(tmp_ts, arima_forecast, xgb_forecast))
+    y_min = min(c(tmp_ts, arima_forecast, xgb_forecast, xgb_pacf_forecast))
+    y_max = max(c(tmp_ts, arima_forecast, xgb_forecast, xgb_pacf_forecast))
     svg(paste('./output/ts/',i,'.svg', sep=""))
     plot(NULL,
          xlim = c(1, length(tmp_ts)),
@@ -154,8 +154,8 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     dev.off()
 
     # Plot relative errors
-    y_min = min(c(arima_rel_err, xgb_rel_err))
-    y_max = max(c(arima_rel_err, xgb_rel_err))
+    y_min = min(c(arima_rel_err, xgb_rel_err, xgb_pacf_rel_err))
+    y_max = max(c(arima_rel_err, xgb_rel_err, xgb_pacf_rel_err))
     svg(paste('./output/ts/',i,'-RELATIVE_ERROR.svg', sep=""))
     plot(NULL,
          ylim = c(y_min, y_max),
@@ -168,7 +168,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     lines(arima_rel_err, col = "blue")
     lines(xgb_rel_err, col = "red")
     lines(xgb_pacf_rel_err, col = "green")
-    legend(1, y_max, legend=c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red"), lty=1:1)
+    legend(1,y_max, legend=c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
     dev.off()
 }
 
@@ -179,3 +179,40 @@ print_forecast_stats(xgb_pacf_error, xgb_pacf_relative_error, 'XGBoost PACF')
 plot_forecast_errors(arima_error, arima_relative_error, 'ARIMA')
 plot_forecast_errors(xgb_error, xgb_relative_error, 'XGB')
 plot_forecast_errors(xgb_pacf_error, xgb_pacf_relative_error, 'XGB_PACF')
+
+# Plot densites on common figure
+d_arima_error = density(arima_error)
+d_xgb_error = density(xgb_error)
+d_xgb_pacf_error = density(xgb_pacf_error)
+y_min = min(d_arima_error$y, d_xgb_error$y, d_xgb_pacf_error$y)
+y_max = max(d_arima_error$y, d_xgb_error$y, d_xgb_pacf_error$y)
+x_min = min(d_arima_error$x, d_xgb_error$x, d_xgb_pacf_error$x)
+x_max = max(d_arima_error$x, d_xgb_error$x, d_xgb_pacf_error$x)
+svg(paste('output/err_density_common.svg'))
+plot(d_arima_error,
+     col = 'blue',
+     xlim = c(x_min, x_max),
+     ylim = c(y_min, y_max),
+     main = 'Gestosc bledow bezwzglednych')
+lines(d_xgb_error, col = 'red')
+lines(d_xgb_pacf_error, col = 'green')
+legend(x_min, y_max, legend = c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
+grid()
+
+d_arima_rel_error = density(arima_relative_error)
+d_xgb_rel_error = density(xgb_relative_error)
+d_xgb_pacf_rel_error = density(xgb_pacf_relative_error)
+y_min = min(d_arima_rel_error$y, d_xgb_rel_error$y, d_xgb_pacf_rel_error$y)
+y_max = max(d_arima_rel_error$y, d_xgb_rel_error$y, d_xgb_pacf_rel_error$y)
+x_min = min(d_arima_rel_error$x, d_xgb_rel_error$x, d_xgb_pacf_rel_error$x)
+x_max = max(d_arima_rel_error$x, d_xgb_rel_error$x, d_xgb_pacf_rel_error$x)
+svg(paste('output/rel_err_density_common.svg'))
+plot(d_arima_rel_error,
+     col = 'blue',
+     xlim = c(x_min, x_max),
+     ylim = c(y_min, y_max),
+     main = 'Gestosc bledow wzglednych')
+lines(d_xgb_rel_error, col = 'red')
+lines(d_xgb_pacf_rel_error, col = 'green')
+legend(x_min, y_max, legend = c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
+grid()
