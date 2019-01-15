@@ -31,6 +31,19 @@ xgb_wrapper <- function(input_data, test_data_len) {
     return(ret)
 }
 
+print_forecast_stats <- function(error, relative_error, name) {
+    cat(paste(name, " sredni blad, odchylenie standardowe, max, min\n"))
+    print(mean(as.numeric(unlist(error))))
+    print(sd(as.numeric(unlist(error))))
+    print(max(abs(as.numeric(unlist(error)))))
+    print(min(abs(as.numeric(unlist(error)))))
+    cat(paste(name, " sredni blad wzlgedny [%], odchylenie standardowe, max, min\n"))
+    print(mean(as.numeric(unlist(relative_error))))
+    print(sd(as.numeric(unlist(relative_error))))
+    print(max(abs(as.numeric(unlist(relative_error)))))
+    print(min(abs(as.numeric(unlist(relative_error)))))
+}
+
 plot_forecast_errors <- function(error, relative_error, name) {
     relative_error = data.matrix(relative_error)
     
@@ -125,4 +138,3 @@ plot_forecast_errors <- function(error, relative_error, name) {
     plot(density(error), main = name)
     grid()
 }
-
