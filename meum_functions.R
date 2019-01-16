@@ -4,6 +4,9 @@ library(xgboost)
 library(TSPred)
 library(tseries)
 library(forecast)
+library(caret)
+
+USE_XGB_HYPERPARAMETERS_OPTIMIZATION = TRUE
 
 xgb_wrapper <- function(input_data, test_data_len) {
     input_data = na.omit(input_data)
@@ -18,7 +21,18 @@ xgb_wrapper <- function(input_data, test_data_len) {
     x_test = test_data[,2:ncol(input_data)]
     y_test = test_data[,1]
 
-    xgb_model = xgboost(data=x_learn, label=y_learn, nround=5, objective="reg:linear")
+    if (USE_XGB_HYPERPARAMETERS_OPTIMIZATION) {
+        timecontrol <- trainControl(method = 'timeslice',
+                                    initialWindow = learn_data_length - 19,
+                                    horizon = 18,
+                                    selectionFunction = "best",
+                                    fixedWindow = FALSE,
+                                    allowParallel = TRUE) 
+        xgb_model <- train(x_learn, y_learn, method = "xgbTree", trControl = timecontrol)
+    } else {
+        xgb_model = xgboost(data=x_learn, label=y_learn, nround=5, objective="reg:linear")
+    }
+
     xgb_forecast = predict(xgb_model, x_test)
 
     xgb_err = (xgb_forecast - y_test)
@@ -32,12 +46,12 @@ xgb_wrapper <- function(input_data, test_data_len) {
 }
 
 print_forecast_stats <- function(error, relative_error, name) {
-    cat(paste(name, " sredni blad, odchylenie standardowe, max, min\n"))
+    cat(paste(name, "sredni blad, odchylenie standardowe, max, min\n"))
     print(mean(as.numeric(unlist(error))))
     print(sd(as.numeric(unlist(error))))
     print(max(abs(as.numeric(unlist(error)))))
     print(min(abs(as.numeric(unlist(error)))))
-    cat(paste(name, " sredni blad wzlgedny [%], odchylenie standardowe, max, min\n"))
+    cat(paste(name, "sredni blad wzlgedny [%], odchylenie standardowe, max, min\n"))
     print(mean(as.numeric(unlist(relative_error))))
     print(sd(as.numeric(unlist(relative_error))))
     print(max(abs(as.numeric(unlist(relative_error)))))
