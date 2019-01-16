@@ -165,6 +165,9 @@ Szeregi czasowe z benchmark'u NN3 zostały znormalizowane do przedziału $<1:2>$
 Wadą normalizacji może być przeskalowanie większości z wartości szeregu do wąskiego przedziału w przypadku, kiedy w danych znajduje się co najmniej 1 mocno odstający punkt \cite{noauthor_standardization_nodate}.
 Przesunięcie zakresu z przedziału $<0:1>$ do $<1:2>$ pozwala również na obliczanie błędów względnych bez obawy dzielenia przez 0.
 
+Predykcja wartości odbywa się z krokiem o długości 1.
+Oznacza to, iż przy predykcji wartości dla chwil czasowych $t+n$ wykorzystywane są rzeczywiste wartości szeregu z chwil czasowych wcześniejszych od $t+n$.
+
 \subsection{ARIMA}
 \textcolor{red}{Do uzupełnienia.}
 
