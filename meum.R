@@ -217,7 +217,7 @@ plot(d_arima_error,
      col = 'blue',
      xlim = c(x_min, x_max),
      ylim = c(y_min, y_max),
-     main = 'Gęstość błędów bezwzglednych')
+     main = 'Gęstość błędów bezwzględnych')
 lines(d_xgb_error, col = 'red')
 lines(d_xgb_pacf_error, col = 'green')
 legend(x_min, y_max, legend = c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
@@ -235,7 +235,7 @@ plot(d_arima_rel_error,
      col = 'blue',
      xlim = c(x_min, x_max),
      ylim = c(y_min, y_max),
-     main = 'Gęstość błędów wzglednych')
+     main = 'Gęstość błędów względnych')
 lines(d_xgb_rel_error, col = 'red')
 lines(d_xgb_pacf_rel_error, col = 'green')
 legend(x_min, y_max, legend = c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
