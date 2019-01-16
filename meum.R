@@ -16,7 +16,6 @@ SCALE_TS_TO_RANGE_1_2 = TRUE
 STANDARIZE_TS = FALSE
 
 DEBUG = FALSE
-USE_MARIMAPRED = FALSE
 # Przewiduje 1 do przodu lecz na podstawie nowego modelu.
 PREDICT_SINGLE_POINT = FALSE
 
@@ -99,9 +98,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     # ARIMA
-    if (USE_MARIMAPRED) {
-        arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
-    } else {
+    if (TRUE) {
         if(PREDICT_SINGLE_POINT) {
             arima_forecast_oneFront = 1:TEST_DATA_LENGTH
             for (j in 1:TEST_DATA_LENGTH) {
