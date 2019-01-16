@@ -14,7 +14,7 @@ SCALE_TS_TO_RANGE_1_2 = TRUE
 
 DEBUG = FALSE
 
-ARIMA_ON_ADHEAD=TRUE
+ARIMA_ONE_ADHEAD=TRUE
 ARIMA_ONE_AHEAD_FITTED=FALSE    #FALSE -> jeden w przod poprzez generowanie nowego modelu
                                 #FITTED daje gorsze rezultaty 
 
@@ -93,7 +93,7 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     # ARIMA
-    if( ARIMA_ON_ADHEAD )
+    if( ARIMA_ONE_ADHEAD )
     {
         if( ARIMA_ONE_AHEAD_FITTED ){
             learn_data_length = length( tmp_ts_learn )
