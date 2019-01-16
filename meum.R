@@ -17,7 +17,9 @@ STANDARIZE_TS = FALSE
 
 DEBUG = FALSE
 # Przewiduje 1 do przodu lecz na podstawie nowego modelu.
-PREDICT_SINGLE_POINT = FALSE
+ARIMA_ONE_AHEAD = TRUE
+ARIMA_ONE_AHEAD_FITTED = FALSE    # FALSE -> jeden w przod poprzez generowanie nowego modelu
+                                  # FITTED daje gorsze rezultaty
 
 PLOT_BOXPLOT_ZOOM = FALSE
 BOXPLOT_ZOOM = 70
@@ -98,30 +100,29 @@ for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
     }
 
     # ARIMA
-    if (TRUE) {
-        if(PREDICT_SINGLE_POINT) {
-            arima_forecast_oneFront = 1:TEST_DATA_LENGTH
+    if (ARIMA_ONE_AHEAD) {
+        if (ARIMA_ONE_AHEAD_FITTED) {
+            learn_data_length = length(tmp_ts_learn)
+            arima_model = auto.arima(tmp_ts[1:learn_data_length])
+            arima_forecast = fitted(Arima(tmp_ts[(learn_data_length+1):(learn_data_length+18)],
+                                          model=arima_model))
+        } else {
+            arima_forecast_oneAhead = 1:TEST_DATA_LENGTH
+            learn_data_length = length( tmp_ts_learn )
             for (j in 1:TEST_DATA_LENGTH) {
                 ts_end = learn_data_length + j
                 ts <- ts(tmp_ts[1:ts_end])
-                nobs <- length(ts)
-                reg <- cbind(1:nobs)
-                xreg = ts(reg,start=1)
-                newreg <- ts_end + 1
-                arima_model = auto.arima(ts, xreg = xreg)
-                arima_forecast_all = forecast(arima_model, h = 1, xreg = newreg)
+                arima_model = auto.arima(ts)
+                arima_forecast_all = forecast(arima_model, h = 1)
                 arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
-                arima_forecast_oneFront[j] = arima_forecast
+                arima_forecast_oneAhead[j] = arima_forecast
             }
-            arima_forecast = arima_forecast_oneFront
-        } else {
-            nobs <- length(tmp_ts)
-            xreg <- cbind(1:nobs)
-            newreg <- (nobs+1):(nobs+TEST_DATA_LENGTH)
-            arima_model = auto.arima(tmp_ts, xreg = xreg)
-            arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg = newreg)
-            arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
+            arima_forecast = arima_forecast_oneAhead
         }
+    } else {
+        arima_model = auto.arima(tmp_ts)
+        arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH)
+        arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
     }
 
     arima_err = (arima_forecast - tail(tmp_ts, TEST_DATA_LENGTH))
