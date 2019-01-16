@@ -4,15 +4,23 @@ library(xgboost)
 library(TSPred)
 library(tseries)
 library(forecast)
-
+library(data.table)
+source('meum_functions.R')
 
 NUMBER_OF_NN3_TIME_SERIES = 111
 TEST_DATA_LENGTH = 18
 
+SCALE_TS_TO_RANGE_1_2 = TRUE
+
 DEBUG = FALSE
 USE_MARIMAPRED = FALSE
 # Przewiduje 1 do przodu lecz na podstawie nowego modelu.
-DEBUG_TWO = TRUE
+PREDICT_SINGLE_POINT = FALSE
+
+PLOT_BOXPLOT_ZOOM = FALSE
+BOXPLOT_ZOOM = 70
+
+PACF_LAG_THRESHOLD = 0.1
 
 dir.create("output", showWarnings = FALSE)
 dir.create("output/ts", showWarnings = FALSE)
@@ -21,234 +29,190 @@ dir.create("output/ts", showWarnings = FALSE)
 data(NN3.A, NN3.A.cont)
 
 for (i in 1:NUMBER_OF_NN3_TIME_SERIES) {
-    tmp_ts = append(as.numeric(unlist(na.omit(NN3.A[i]))),
-                    as.numeric(unlist(na.omit(NN3.A.cont[i]))))
+    tmp_ts_learn = as.numeric(unlist(na.omit(NN3.A[i])))
+    tmp_ts_test = as.numeric(unlist(na.omit(NN3.A.cont[i])))
+    tmp_ts = append(tmp_ts_learn, tmp_ts_test)
+    if (SCALE_TS_TO_RANGE_1_2) {
+        tmp_ts = tmp_ts - min(tmp_ts)
+        tmp_ts = tmp_ts / max(tmp_ts) + 1
+    }
 
     # Create input data features for XGBoost
     month_in_year = 0:(length(tmp_ts)-1) %% 12
 
     # Relative strength index
     rsi = RSI(tmp_ts, n = 3, maType = "WMA")
+    # Create lag in the features to avoid look-ahead bias
     rsi = c(NA, head(rsi, -1))
-    # Potential need to create lag in the features to avoid look-ahead bias?
 
-    input_data = cbind(tmp_ts, month_in_year, rsi)
-    input_data = na.omit(input_data)
-    colnames(input_data) = c("Data", "Month", "RSI")
+    xgb_input_data = cbind(tmp_ts, month_in_year, rsi)
+    colnames(xgb_input_data) = c("Data", "Month", "RSI")
 
     if (DEBUG) {
-        print(input_data)
+        print(xgb_input_data)
     }
 
-    learn_data_length = length(tmp_ts) - TEST_DATA_LENGTH
-    learn_data = input_data[1:learn_data_length,]
-    test_data = input_data[(learn_data_length+1):nrow(input_data),]
-
-    # Split data training and test data into X and Y
-    x_learn = learn_data[,2:ncol(input_data)]
-    y_learn = learn_data[,1]
-    x_test = test_data[,2:ncol(input_data)]
-    y_test = test_data[,1]
-
-    xgb_model = xgboost(data=x_learn, label=y_learn, nround=5, objective="reg:linear")
-    xgb_forecast = predict(xgb_model, x_test)
-
-    xgb_error = (xgb_forecast - y_test) / y_test * 100
+    xgb_res = xgb_wrapper(xgb_input_data, TEST_DATA_LENGTH)
+    xgb_forecast = xgb_res$'Forecast'
+    xgb_err = xgb_res$'Error'
+    xgb_rel_err = xgb_res$'Relative error'
 
     if (exists("xgb_relative_error")) {
-        xgb_relative_error = cbind(xgb_relative_error, xgb_error)
+        xgb_error = cbind(xgb_error, xgb_err)
+        xgb_relative_error = cbind(xgb_relative_error, xgb_rel_err)
     } else {
-        xgb_relative_error = cbind(xgb_error)
+        xgb_error = cbind(xgb_err)
+        xgb_relative_error = cbind(xgb_rel_err)
+    }
+
+    # XGBoost based on PACF
+    xgb_pacf_input_data = cbind(tmp_ts)
+
+    tmp_pacf = pacf(tmp_ts_learn, lag = 12)
+    tmp_pacf = tmp_pacf$acf
+    for (pacf_i in 1:12) {
+        if (abs(tmp_pacf[pacf_i]) >= PACF_LAG_THRESHOLD) {
+            tmp_ts_lagged = shift(tmp_ts, pacf_i)
+            xgb_pacf_input_data = cbind(xgb_pacf_input_data, tmp_ts_lagged)
+        }
+    }
+
+    xgb_pacf_res = xgb_wrapper(xgb_pacf_input_data, TEST_DATA_LENGTH)
+    xgb_pacf_forecast = xgb_pacf_res$'Forecast'
+    xgb_pacf_err = xgb_pacf_res$'Error'
+    xgb_pacf_rel_err = xgb_pacf_res$'Relative error'
+
+    if (exists("xgb_pacf_relative_error")) {
+        xgb_pacf_error = cbind(xgb_pacf_error, xgb_pacf_err)
+        xgb_pacf_relative_error = cbind(xgb_pacf_relative_error, xgb_pacf_rel_err)
+    } else {
+        xgb_pacf_error = cbind(xgb_pacf_err)
+        xgb_pacf_relative_error = cbind(xgb_pacf_rel_err)
     }
 
     # ARIMA
     if (USE_MARIMAPRED) {
         arima_forecast = marimapred( NN3.A[i], NN3.A.cont[i], plot=FALSE )[,1]
     } else {
-	if(DEBUG_TWO)
-	{
-		arima_forecast_oneFront = NULL
-		connected_ts = c( na.omit( NN3.A[i][,1] ),NN3.A.cont[i][,1]  )
-		for( j in 1:18 )
-		{
-			ts_end = learn_data_length+j
-			ts <- ts( connected_ts[1:ts_end] )
-			nobs <- length(ts)
-		  	reg <- cbind(1:nobs)
-			xreg=ts(reg,start=1)
-			newreg <- cbind(nobs+1:nobs,NULL)
-			arima_model = auto.arima( ts, xreg=xreg )
-			arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg=xreg)
-			arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
-			arima_forecast_oneFront=c(arima_forecast_oneFront,arima_forecast[learn_data_length+j])
-		}
-		arima_forecast=arima_forecast_oneFront
-	}
-	else
-	{
-		ts <- ts( NN3.A[i] )
-		nobs <- length(ts)
-	  	reg <- cbind(1:nobs)
-		xreg=ts(reg,start=1)
-		newreg <- cbind(nobs+1:nobs,NULL)
-		arima_model = auto.arima( ts, xreg=xreg )
-		arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg=xreg)
-		arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
-			cat(" AAAAAAAAAAAAAAAAAAAAAAAAAA\nldl: ")
-			str( learn_data_length )
-			cat(" ts: ")
-			str( ts )
-			cat(" nobs: ")
-			str( nobs )
-			#cat(" xreg: ")
-			#str( xreg )
-			cat(" arima_forecast: ")
-			str( arima_forecast )
-	}
+        if(PREDICT_SINGLE_POINT) {
+            arima_forecast_oneFront = 1:TEST_DATA_LENGTH
+            for (j in 1:TEST_DATA_LENGTH) {
+                ts_end = learn_data_length + j
+                ts <- ts(tmp_ts[1:ts_end])
+                nobs <- length(ts)
+                reg <- cbind(1:nobs)
+                xreg = ts(reg,start=1)
+                newreg <- ts_end + 1
+                arima_model = auto.arima(ts, xreg = xreg)
+                arima_forecast_all = forecast(arima_model, h = 1, xreg = newreg)
+                arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
+                arima_forecast_oneFront[j] = arima_forecast
+            }
+            arima_forecast = arima_forecast_oneFront
+        } else {
+            nobs <- length(tmp_ts)
+            xreg <- cbind(1:nobs)
+            newreg <- (nobs+1):(nobs+TEST_DATA_LENGTH)
+            arima_model = auto.arima(tmp_ts, xreg = xreg)
+            arima_forecast_all = forecast(arima_model, h = TEST_DATA_LENGTH, xreg = newreg)
+            arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
+        }
     }
 
-    arima_error = (arima_forecast - NN3.A.cont[i] ) / NN3.A.cont[i] * 100
+    arima_err = (arima_forecast - tail(tmp_ts, TEST_DATA_LENGTH))
+    arima_rel_err = arima_err / tail(tmp_ts, TEST_DATA_LENGTH) * 100
 
     if (exists("arima_relative_error")) {
-        arima_relative_error = cbind(arima_relative_error, arima_error)
+        arima_error = cbind(arima_error, arima_err)
+        arima_relative_error = cbind(arima_relative_error, arima_rel_err)
     } else {
-        arima_relative_error = cbind(arima_error)
+        arima_error = cbind(arima_err)
+        arima_relative_error = cbind(arima_rel_err)
     }
 
-    # Plot time series
-    y_min = min(tmp_ts)
-    y_max = max(tmp_ts)
+    # Plot time series with forecasts
+    y_min = min(c(tmp_ts, arima_forecast, xgb_forecast))
+    y_max = max(c(tmp_ts, arima_forecast, xgb_forecast))
     svg(paste('./output/ts/',i,'.svg', sep=""))
-    plot(NULL, xlim = c(1, length(tmp_ts)), ylim = c(y_min, y_max), ylab = "Wartosc")
+    plot(NULL,
+         xlim = c(1, length(tmp_ts)),
+         ylim = c(y_min, y_max),
+         ylab = "Wartość",
+         main = paste('NN3 TS:', i))
     lines(tmp_ts, col = "black")
+    tmp_x = 1:TEST_DATA_LENGTH
+    tmp_x = tmp_x + length(tmp_ts_learn)
+    lines(x = tmp_x, y = arima_forecast, col = "blue")
+    lines(x = tmp_x, y = xgb_forecast, col = "red")
+    lines(x = tmp_x, y = xgb_pacf_forecast, col = "green")
     grid()
+    legend(1,
+           y_max,
+           legend=c("Szereg czasowy", "ARIMA","XGBoost", "XGBoost PACF"),
+           col=c("black","blue","red"),
+           lty = 1:1)
     dev.off()
 
-    # Plot forecasts
-    y_min = min( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
-    y_max = max( c(NN3.A.cont[i][,1], arima_forecast, xgb_forecast ) )
-    svg(paste('./output/ts/',i,'_forecast.svg', sep=""))
+    # Plot relative errors
+    y_min = min(c(arima_rel_err, xgb_rel_err))
+    y_max = max(c(arima_rel_err, xgb_rel_err))
+    svg(paste('./output/ts/',i,'-RELATIVE_ERROR.svg', sep=""))
     plot(NULL,
-         ylim = c(y_min, y_max ),
+         ylim = c(y_min, y_max),
+         ylab = "Wartość [%]",
          xlim = c(1,18),
-         ylab = "Przewidywana wartosc",
-         xlab=NULL,
-         main=paste('NN3:', i))
-    grid()
-    lines( NN3.A.cont[i][,1], col="black", lwd= )
-    lines( arima_forecast, col="blue" )
-    lines( xgb_forecast, col="red" )
-    legend(1, y_max, legend=c("cont", "ARIMA","XGBOOST"), col=c("black","blue","red"), lty=1:1)
-    dev.off()
-
-    # Plot errors
-    y_min = min( c(arima_error[,1], xgb_error ) )
-    y_max = max( c(arima_error[,1], xgb_error ) )
-    svg( paste('./output/ts/',i,'-ERROR.svg', sep="") )
-    plot(NULL,
-         ylim = c(y_min, y_max ),
-         xlim = c(1,18), ylab = "Blad wzgledny [%]",
-         xlab=NULL,
-         main=paste('NN3:',i,"Error"))
+         xlab = NULL,
+         main = paste('NN3:',i,"Błąd względny"))
     grid()
     abline(h=0)
-    lines( arima_error[,1], col="blue" )
-    lines( xgb_error, col="red" )
-    legend(1, y_max, legend=c("ARIMA","XGBOOST"), col=c("blue","red"), lty=1:1)
+    lines(arima_rel_err, col = "blue")
+    lines(xgb_rel_err, col = "red")
+    lines(xgb_pacf_rel_err, col = "green")
+    legend(1,y_max, legend=c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
     dev.off()
 }
 
-cat("ARIMA sredni blad wzlgedny [%], odchylenie standardowe, max, min \n")
-print(mean(as.numeric(unlist(arima_relative_error))))
-print(sd(as.numeric(unlist(arima_relative_error))))
-print(max(abs(as.numeric(unlist(arima_relative_error)))))
-print(min(abs(as.numeric(unlist(arima_relative_error)))))
+print_forecast_stats(arima_error, arima_relative_error, 'ARIMA')
+print_forecast_stats(xgb_error, xgb_relative_error, 'XGBoost')
+print_forecast_stats(xgb_pacf_error, xgb_pacf_relative_error, 'XGBoost PACF')
 
-cat("XGBoost sredni blad wzlgedny [%], odchylenie standardowe, max, min \n")
-print(mean(xgb_relative_error))
-print(sd(xgb_relative_error))
-print(max(abs(xgb_relative_error)))
-print(min(abs(xgb_relative_error)))
+plot_forecast_errors(arima_error, arima_relative_error, 'ARIMA')
+plot_forecast_errors(xgb_error, xgb_relative_error, 'XGB')
+plot_forecast_errors(xgb_pacf_error, xgb_pacf_relative_error, 'XGB_PACF')
 
-# XGBoost
-svg("output/xgb_rel_err_boxplot.svg")
-boxplot(as.vector(xgb_relative_error),
-        ylab = "Blad wzgledny [%]")
+# Plot densites on common figure
+d_arima_error = density(arima_error)
+d_xgb_error = density(xgb_error)
+d_xgb_pacf_error = density(xgb_pacf_error)
+y_min = min(d_arima_error$y, d_xgb_error$y, d_xgb_pacf_error$y)
+y_max = max(d_arima_error$y, d_xgb_error$y, d_xgb_pacf_error$y)
+x_min = min(d_arima_error$x, d_xgb_error$x, d_xgb_pacf_error$x)
+x_max = max(d_arima_error$x, d_xgb_error$x, d_xgb_pacf_error$x)
+svg(paste('output/err_density_common.svg'))
+plot(d_arima_error,
+     col = 'blue',
+     xlim = c(x_min, x_max),
+     ylim = c(y_min, y_max),
+     main = 'Gestosc bledow bezwzglednych')
+lines(d_xgb_error, col = 'red')
+lines(d_xgb_pacf_error, col = 'green')
+legend(x_min, y_max, legend = c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
 grid()
-#dev.off()
-svg("output/xgb_rel_err_boxplot_zoom.svg")
-boxplot(as.vector(xgb_relative_error),
-        ylim = c(-50, 50),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
-svg("output/xgb_rel_err_boxplot_index.svg")
-boxplot(t(xgb_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
-svg("output/xgb_rel_err_boxplot_zoom_index.svg")
-boxplot(t(xgb_relative_error),
-        ylim = c(-50, 50),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
 
-svg("output/xgb_rel_err_density.svg")
-plot(density(xgb_relative_error))
+d_arima_rel_error = density(arima_relative_error)
+d_xgb_rel_error = density(xgb_relative_error)
+d_xgb_pacf_rel_error = density(xgb_pacf_relative_error)
+y_min = min(d_arima_rel_error$y, d_xgb_rel_error$y, d_xgb_pacf_rel_error$y)
+y_max = max(d_arima_rel_error$y, d_xgb_rel_error$y, d_xgb_pacf_rel_error$y)
+x_min = min(d_arima_rel_error$x, d_xgb_rel_error$x, d_xgb_pacf_rel_error$x)
+x_max = max(d_arima_rel_error$x, d_xgb_rel_error$x, d_xgb_pacf_rel_error$x)
+svg(paste('output/rel_err_density_common.svg'))
+plot(d_arima_rel_error,
+     col = 'blue',
+     xlim = c(x_min, x_max),
+     ylim = c(y_min, y_max),
+     main = 'Gestosc bledow wzglednych')
+lines(d_xgb_rel_error, col = 'red')
+lines(d_xgb_pacf_rel_error, col = 'green')
+legend(x_min, y_max, legend = c("ARIMA","XGBoost","XGBoost PACF"), col=c("blue","red","green"), lty=1:1)
 grid()
-#dev.off()
-
-svg("output/xgb_errors_common.svg")
-plot(xgb_relative_error[,1],
-     ylab = "Blad wzgledny [%]",
-     pch = 20,
-     ylim=c(round(min(xgb_relative_error))-1, round(max(xgb_relative_error)) +1))
-for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-    points(xgb_relative_error[,i],
-           pch = 20)
-}
-grid()
-#dev.off()
-
-# ARIMA
-arima_relative_error = data.matrix( arima_relative_error )
-svg("output/arima_rel_err_boxplot.svg")
-boxplot(as.vector(arima_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
-svg("output/arima_rel_err_boxplot_zoom.svg")
-boxplot(as.vector(arima_relative_error),
-        ylim = c(-50, 50),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
-svg("output/arima_rel_err_boxplot_index.svg")
-boxplot(t(arima_relative_error),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
-svg("output/arima_rel_err_boxplot_zoom_index.svg")
-boxplot(t(arima_relative_error),
-        ylim = c(-50, 50),
-        ylab = "Blad wzgledny [%]")
-grid()
-#dev.off()
-
-svg("output/arima_rel_err_density.svg")
-plot(density(arima_relative_error))
-grid()
-#dev.off()
-
-svg("output/arima_errors_common.svg")
-plot(arima_relative_error[,1],
-     ylab = "Blad wzgledny [%]",
-     pch = 20,
-     ylim=c(round(min(arima_relative_error))-1, round(max(arima_relative_error)) +1))
-for (i in 2:NUMBER_OF_NN3_TIME_SERIES) {
-    points(arima_relative_error[,i],
-           pch = 20)
-}
-grid()
-#dev.off()
