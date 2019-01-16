@@ -14,6 +14,7 @@
 \usepackage{makecell}
 \usepackage[hidelinks]{hyperref}
 \usepackage[dvipsnames]{xcolor}
+\usepackage[nottoc]{tocbibind}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 
@@ -160,6 +161,10 @@ Szeregi czasowe w benchmark'u NN3 są stosunkowo krótkie (min 68, max 144), a s
 
 \section{Implementacja}
 
+Szeregi czasowe z benchmark'u NN3 zostały znormalizowane do przedziału $<1:2>$ w celu umożliwienia porównywania błędów bezwzględnych.
+Wadą normalizacji może być przeskalowanie większości z wartości szeregu do wąskiego przedziału w przypadku, kiedy w danych znajduje się co najmniej 1 mocno odstający punkt \cite{noauthor_standardization_nodate}.
+Przesunięcie zakresu z przedziału $<0:1>$ do $<1:2>$ pozwala również na obliczanie błędów względnych bez obawy dzielenia przez 0.
+
 \subsection{ARIMA}
 \textcolor{red}{Do uzupełnienia.}
 
@@ -175,4 +180,8 @@ Zagregowana funkcja gęstości prawdopodobieństwa błędów może ukrywać niek
 
 Wyniki strojenia parametrów metody xgboost zaprezentowane zostaną w analogiczny sposób.
 Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, niosące wartościowe informacje.
+
+\bibliographystyle{plain}
+\bibliography{MEUM_projekt.bib}
+
 \end{document}

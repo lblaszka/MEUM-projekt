@@ -6,6 +6,8 @@ all: $(NAME).pdf
 
 $(NAME).pdf: $(NAME).tex
 	pdflatex $(NAME).tex
+	bibtex $(NAME)
+	pdflatex $(NAME).tex
 	pdflatex $(NAME).tex
 
 show:
