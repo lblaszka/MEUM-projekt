@@ -193,7 +193,7 @@ Oznacza to, iż przy predykcji wartości dla chwil czasowych $t+n$ wykorzystywan
 Predykcje z krokiem o długości 1 zrealizowano tworząc oddzielny model dla każdej wartości szeregu testowego. Szereg uczący w każdym kroku jest zwiększany o jedną wartość z szeregu testowego.
 Do uzyskania przewidywanej wartości z wyliczonego modelu wykorzystaniu funkcję forecast. Parametr "h" określa dla ilu kroków ma zostać wyliczona przewidywana wartość.
 
-Poniżej kod dokonuje predykcji z krokiem o długości 1 na podstawie wyliczonego modelu ARIMA'y dla N-tego przebiegu czasowego benchmarka NN3:
+Poniżej kod dokonuje predykcji z krokiem o długości 1 na podstawie wyliczonego modelu ARIMA'y dla N-tego przebiegu czasowego benchmark'u NN3:
 \begin{lstlisting}[language=R]
 learn_data_length = length( tmp_ts_learn )
 for (j in 1:TEST_DATA_LENGTH) {
