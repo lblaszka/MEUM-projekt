@@ -207,7 +207,26 @@ for (j in 1:TEST_DATA_LENGTH) {
 \end{lstlisting}
 
 \subsection{XGBoost}
-\textcolor{red}{Do uzupełnienia.}
+
+Predykcja za pomocą metody XGBoost zrealizowana została na dwa sposoby, różniące się podejściem do wyboru atrybutów/cech wykorzystywanych do uczenia i przewidywania.
+
+\subsubsection{XGBoost z subiektywnie wybranymi cechami}
+Osoby realizujące projekt dokonały subiektywnego wyboru dwóch atrybutów.
+Pierwszy z nich to miesiąc, z którego pochodzi dana wartość szeregu czasowego.
+Drugi to tzw. wskaźnik siły względnej (\textit{ang. relative strength index}), określający siłę trendu.
+Oparty jest on o średnią ruchomą \cite{noauthor_relative_2018}.
+W projekcie obliczany jest z wykorzystaniem ważonej średniej ruchomej (\textit{ang. weighted moving average}).
+
+\subsubsection{XGBoost na podstawie autokorelacji częściowej}
+Metoda ta polegała na obliczaniu funkcji autokorelacji częściowej i wyznaczaniu na jej podstawie tzw. lagów, czyli wartości szeregu przesuniętych w czasie.
+Wybrana została funkcji autokorelacji częściowej, a nie funkcja autokorelacji, ponieważ wydaje się być ona bardziej odpowiednia dla metod nieliniowych.
+Autokorelacja częściowa dla lagu k jest korelacją, która usuwa efekt jakichkolwiek korelacji dla lagów krótszych niż k \cite{cowpertwait_introductory_2009}.
+Ze względu na fakt, iż wszystkie szeregi czasowe z benchmark'u NN3 są danymi biznesowymi, a okres ich próbkowania wynosił 1 miesiąc, maksymalne opóżnienie (lag) dla którego jest wyznaczana funkcja autokorelacji częściowej wynosi 12.
+Szeregi czasowe w benchmark'u NN3 są stosunkowo krótkie, w związku z tym należy brać pod uwagę fakt, iż wykorzystywanie lagów jako atrybutów zmniejsza liczbę elementów zbioru uczącego.
+Do zbioru atrybutów wybierane były wszystkie lagi, dla których wartość absolutna funkcji autokorelacji częściowej była większa lub równa 0.1.
+
+\subsubsection{Optymalizacja hiperparametrów}
+
 
 \section{Prezentacja wyników}
 \color{red}
