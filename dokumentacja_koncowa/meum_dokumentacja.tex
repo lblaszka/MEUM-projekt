@@ -9,6 +9,7 @@
 \usepackage{float}
 \usepackage{amssymb}
 \usepackage{flexisym}
+\usepackage{listings}
 \renewcommand{\thesection}{\arabic{section}.}
 \renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}.}
 \usepackage{makecell}
@@ -100,12 +101,30 @@ Model ARMA(p,q) dla stacjonarnego szeregu czasowego $z_t$ ma postać:
 \end{equation}
 gdzie $z_t$ jest szeregiem stacjonarnym o zerowej średniej, $\phi_i,\psi_i \in \mathbb{R} (\phi_p \neq 0, \psi_q \neq 0)$, a $w_i \sim N(0, \sigma^2)$.
 
-Różnicowanie potrzebne jest do osiągnięcia stacjonarności szeregu i polega na zastąpieniu szeregu czasowego $z_t$ nowym szeregiem czasowym $z\textprime_{t}$ takim że:
+Model ARMA jest połączeniem dwóch modeli:
+\begin{itemize}
+\item Model AR(p) - proces autoregresyjny $p$ rzędu określa wpływ $p$ poprzednich obserwacji na wartość obecną $z_t$.
+Przy wyliczaniu modelu AR poszukiwane są wartości $(\phi_1, ..., \phi_p)$ by spełnić równanie\cite{armia_s_zajac}:
 \begin{equation}
-    z\textprime_{t} = \nabla z_{t} = z_t - z_{t-1}
+    z_t = c + \phi_1 z_{t-1} + \phi_2 z_{t-2} + ... + \phi_p z_{t-p}+w
 \end{equation}
 
-\textcolor{red}{Trzeba dodać informację co jest x a co jest y podczas predykcji w ARIMie.}
+
+\item Model MA(q) - średnia ruchoma $q$ rzędu opisuje zależność obserwacji $z_t$ od aktualnego zakłócenia $w_t$ oraz $q$ poprzednich.  Poszukiwane są wartości $(\psi_1, ..., \psi_q)$ przy znanych wartościach zakłóceń $(w_1, ..., w_t)$. Wzór modelu MA\cite{armia_s_zajac}: 
+\begin{equation}
+    z_t = c + \psi_1 w_{t-1} + \psi_2 w_{t-2} + ... + \psi_q w_{t-q} + w_t
+\end{equation}
+\end{itemize}
+
+Model ARIMA do usuwania trendu wykonuje operację różnicowania szerego gdzie k to opóźnienie (lag). Wzór różnicowania szeregu\cite{armia_s_zajac}:
+\begin{equation}
+    z_{t}'=z_t-z_{t-k}
+\end{equation}
+Ostatecznie model ARIMA ma postac\cite{armia_s_zajac}:
+\begin{equation}
+    z_t' = c + \phi_1 z_{t-1}' + ... + \phi_p z_{t-p}' + w_t + \psi_1 w_{t-1} + ... + \psi_q w_{t-q}
+\end{equation}
+
 
 \subsection{Metoda xgboost}
 Metoda xgboost (\textit{Extreme Gradient Boosting}) wywodzi się z metody GBM (\textit{ang. Gradient Boosting Machine}).
@@ -169,7 +188,18 @@ Predykcja wartości odbywa się z krokiem o długości 1.
 Oznacza to, iż przy predykcji wartości dla chwil czasowych $t+n$ wykorzystywane są rzeczywiste wartości szeregu z chwil czasowych wcześniejszych od $t+n$.
 
 \subsection{ARIMA}
-\textcolor{red}{Do uzupełnienia.}
+Predykcje z krokiem o długości 1 zrealizowano tworząc oddzielny model dla każdej wartości szeregu testowego. Szereg uczący w każdym kroku był zwiększany o jedną wartość z szeregu testowego.
+\begin{lstlisting}[language=R]
+learn_data_length = length( tmp_ts_learn )
+for (j in 1:TEST_DATA_LENGTH) {
+    ts_end = learn_data_length + j
+    ts <- ts(tmp_ts[1:ts_end])
+    arima_model = auto.arima(ts)
+    arima_forecast_all = forecast(arima_model, h = 1)
+    arima_forecast = as.data.frame(arima_forecast_all)$'Point Forecast'
+    arima_forecast_oneAhead[j] = arima_forecast
+}
+\end{lstlisting}
 
 \subsection{XGBoost}
 \textcolor{red}{Do uzupełnienia.}
@@ -186,5 +216,11 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
 
 \bibliographystyle{plain}
 \bibliography{MEUM_projekt.bib}
+
+\begin{figure}
+    \centering
+    \def\svgwidth{\columnwidth}
+    \input{./images/_ARIMA__err.pdf_tex}
+\end{figure}
 
 \end{document}
