@@ -127,6 +127,11 @@ Ostatecznie model ARIMA(p,d,q) ma postac\cite{armia_s_zajac}:
     z_t' = c + \phi_1 z_{t-1}' + ... + \phi_p z_{t-p}' + w_t + \psi_1 w_{t-1} + ... + \psi_q w_{t-q}
 \end{equation}
 
+Sezonowy model ARIMA(p,d,q)(P,D,Q)$_s$ jest stosowany dla szeregów w których występuje sezonowość. Model ma następującą postać:
+\begin{equation}
+( 1-\psi_1 B - ... \psi_p B^P )(1-\Psi_1B^S-\Psi_2 B^2s - \Psi_p B^{Ps})y'' = (1-\phi_1 B - ,.. - \phi_q B^q)(1-\Phi_1 B^s - \Phi_2 B^2s - \Phi_Q B^{Qs})\epsilon_t
+\end{equation}
+gdzie y’’ jest szeregiem różnicowanym D-krotnie z opóźnieniem s, a następnie d-krotnym z opóźnieniem 1, natomiast $B^ky_t=y_{t-k}$\cite{analiza_i_prognozy_szeregow_czasowych_quantup}.
 
 \subsection{Metoda xgboost}
 Metoda xgboost (\textit{Extreme Gradient Boosting}) wywodzi się z metody GBM (\textit{ang. Gradient Boosting Machine}).
@@ -140,6 +145,10 @@ xgboost używa bardziej regularnej formalizacji modelu w celu kontroli przeuczen
 Dodatkowo xgboost jest mocno zoptymalizowany w obszarach szybkości obliczeń oraz zużycia pamięci.
 
 \textcolor{red}{Trzeba dodać informację co jest x a co jest y podczas predykcji w XGBoost.}
+
+Proces szkolenia modelu xgboost wymaga podania N wartości szeregu czasowego oraz N parametrów przyporządkowane szeregu czasowemu które są powiązane z obserwowanym zjawiskiem i z założenia powinny mieć wpływ na wartości obserwacji.
+W procesie uczenia sieci neuronowej parametry stanowią wartości wejściowe X zaś obserwacje są Y.
+
 
 \section{Zbiór danych}
 Liczba szeregów czasowych znajdujących się w benchmark'u NN3 wynosi 111.
@@ -192,6 +201,7 @@ Oznacza to, iż przy predykcji wartości dla chwil czasowych $t+n$ wykorzystywan
 \subsection{ARIMA}
 Predykcje z krokiem o długości 1 zrealizowano tworząc oddzielny model dla każdej wartości szeregu testowego. Szereg uczący w każdym kroku jest zwiększany o jedną wartość z szeregu testowego.
 Do uzyskania przewidywanej wartości z wyliczonego modelu wykorzystaniu funkcję forecast. Parametr "h" określa dla ilu kroków ma zostać wyliczona przewidywana wartość.
+Parametry dla modelu ARIMA są wyliczane automatycznie przez funkcję auto.arima() na podstawie podanego szeregu czasowego.
 
 Poniżej kod dokonuje predykcji z krokiem o długości 1 na podstawie wyliczonego modelu ARIMA'y dla N-tego przebiegu czasowego benchmark'u NN3:
 \begin{lstlisting}[language=R]
@@ -229,16 +239,8 @@ Do zbioru atrybutów wybierane były wszystkie lagi, dla których wartość abso
 
 
 \section{Prezentacja wyników}
-\color{red}
-Porównanie modelu ARIMA z metodą xgboost dokonane zostanie na podstawie przebiegu funkcji gęstości prawdopodobieństwa względnych błędów.
-Wartości błędów nie będą uśredniane dla poszczególnych szeregów, co oznacza, że długość wektora błędów dla którego zostanie przedstawiony przebieg funkcji gęstości prawdopodobieństwa wynosić będzie $111 \times 18 = 1998$.
 
-Zagregowana funkcja gęstości prawdopodobieństwa błędów może ukrywać niektóre właściwości stosowanych modeli, dlatego zostanie ukazany również, na wspólnym  wykresie, przebieg błędów dla wszystkich szeregów czasowych.
-
-Wyniki strojenia parametrów metody xgboost zaprezentowane zostaną w analogiczny sposób.
-Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, niosące wartościowe informacje.
-
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -258,7 +260,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Błąd bezwzględny}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -278,7 +280,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Wykres pudełkowy}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -298,7 +300,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Wykres pudełkowy dla poszczególnych obserwacji szeregu testowego}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -318,7 +320,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Gęstość blędu}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \centering
     \def\svgwidth{\columnwidth}
@@ -327,7 +329,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
 \end{figure}
 
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -347,7 +349,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Błąd względny}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -367,7 +369,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Wykres pudełkowy dla względnych wartości }
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -387,7 +389,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Wykres pudełkowy względnych wartości błędu dla poszczególnych obserwacji szeregu testowego}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -407,7 +409,7 @@ Dodatkowo zamieszczone mogą zostać fragmenty wydruków stosowanych funkcji, ni
      \caption{Gęstość błędu względne}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[H]
     \centering
     \centering
     \def\svgwidth{\columnwidth}
