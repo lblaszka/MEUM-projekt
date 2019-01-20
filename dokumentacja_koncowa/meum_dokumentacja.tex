@@ -139,16 +139,29 @@ AIC (\textit{ang. Akaike Information Criterion}), AICc (\textit{ang. Second-orde
 Funkcja auto.arima() umożliwia na uzyskanie modelu podając jedynie przebieg czasowy do szkolenia. 
 Na proces automatycznego doboru można wpłynąć podając dodatkowe parametry przy wywołaniu. Poniżej wybrane parametry:
 \begin{itemize}
-\item Granice wartości parametrów dla modeli ARIMA(p,d,q) oraz sARIMA(p,d,q)(P,D,Q)$_s$
+\item Granice wartości parametrów dla modeli ARIMA(p,d,q) oraz sARIMA(p,d,q)(P,D,Q)$_s$.  
 \item d - Kolejność pierwszego różnicowania, jeśli zostanie pominięty wartość zostanie określona na podstawie testu KPSS
 \item D - Kolejność pierwszego różnicowania, jeśli zostanie pominięty wartość zostanie określona na podstawie testu OCSB
-\item ic - wybór kryterium przy doborze parametrów (domyślnie AIC, BIC i AICc )
+\item ic - wybór kryterium przy doborze parametrów
 \item xreg - zewnętrzny wektor regresu
 \item stationary - dla wartości TRUE to proces ograniczy się do modelu stacjonarnego
 \item seasonal - dla wartości FALSE to proces ograniczy się do modelu nie sezonowego
 \item allowdrift - dla wartości TRUE rozważane są modele z dryftem
 \item allowmean - dla wartości TRUE rozważane są modele o niezerowej średniej.
 \end{itemize}
+
+Definicja funkcji auto.arima() wraz z domyślnymi wartościami parametrów w bibliotece "forecast":
+\begin{lstlisting}[language=R]
+auto.arima(y, d = NA, D = NA, max.p = 5, max.q = 5, max.P = 2,
+  max.Q = 2, max.order = 5, max.d = 2, max.D = 1, start.p = 2,
+  start.q = 2, start.P = 1, start.Q = 1, stationary = FALSE,
+  seasonal = TRUE, ic = c("aicc", "aic", "bic"), stepwise = TRUE,
+  trace = FALSE, approximation = (length(x) > 150 | frequency(x) > 12),
+  truncate = NULL, xreg = NULL, test = c("kpss", "adf", "pp"),
+  seasonal.test = c("seas", "ocsb", "hegy", "ch"), allowdrift = TRUE,
+  allowmean = TRUE, lambda = NULL, biasadj = FALSE, parallel = FALSE,
+  num.cores = 2, x = y, ...)
+\end{lstlisting}
 
 \subsection{Metoda XGBoost}
 Metoda XGBoost (\textit{Extreme Gradient Boosting}) wywodzi się z metody GBM (\textit{ang. Gradient Boosting Machine}).
