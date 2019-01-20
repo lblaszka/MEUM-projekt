@@ -233,9 +233,58 @@ Szeregi czasowe w benchmark'u NN3 są stosunkowo krótkie, w związku z tym nale
 Do zbioru atrybutów wybierane były wszystkie lagi, dla których wartość absolutna funkcji autokorelacji częściowej była większa lub równa 0.1.
 
 \subsubsection{Optymalizacja hiperparametrów}
-
+W celu optymalizacji hiperparametrów metody XGBoost wykorzystany został pakiet \textit{caret}.
+Pakiet ten obudowuje inne pakiety służące do tworzenia modeli prognostycznych.
+Jego głównym celem jest dostarczenie ujednoliconego API.
+Posiada on jeszcze kilka innych zalet.
+Najważniejszą z nich, z punktu widzenia tego projektu, jest możliwość automatycznego strojenia hiperparametrów.
+Strojenie hiperparametrów wymaga zazwyczaj wiedzy eksperckiej.
+Przydatne są informacje o procesie, z którego pochodzi szereg czasowy.
+Ułatwia to wybór hiperparametrów, które powinny być strojone oraz dobór sensownych zakresów strojenia tychże parametrów.
+Osoby realizujące projekt, ze względu na brak wiedzy eksperckiej, zrezygnowały z własnej implementacji strojenia za pomocą metody \textit{gridSearch} na rzecz domyślnego strojenia zaimplementowanego w pakiecie \textit{caret}.
+Z faktu tego wynika jeszcze jedna istotna kwestia.
+Zarówno modele dla metody ARIMA, jak i modele dla metody XGBoost są uzyskiwane jako ,,najlepsze'' modele, zwracane przez funkcje dostępne w pakietach \textit{R} od ręki, przy domyślnych ustawieniach opcji odpowiedzialnych za dopasowanie.
+Wydaje się być to bardzo sensowne z punktu widzenia porównywania uzyskanych wyników.
 
 \section{Prezentacja wyników}
+
+W tablilcy \ref{tab:abs_errors} ukazano kilka parametrów statystycznych uzyskanych błędów bezwzględnych, dla szeregów czasowych znormalizowanych do przedziału $<1:2>$.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Metoda} & \textbf{Wartość średnia} & \textbf{Odchylenie standardowe} & \textbf{max(abs)} & \textbf{min(abs)} \\
+        \hline
+        ARIMA & 0.013 & 0.140 & 0.676 & 0.000 \\
+        \hline
+        XGB & -0.009 & 0.236 & 0.855 & 0.000 \\
+        \hline
+        XGB PACF & 0.009 & 0.199 & 0.894 & 0.000 \\
+        \hline
+    \end{tabular}
+    \caption{Parametry statystyczne uzyskanych błędów bezwzględnych dla szeregów czasowych znormalizowanych do przedziału $<1:2>$ (z dokładnością do 3 miejsc po przecinku).}
+    \label{tab:abs_errors}
+\end{table}
+
+W tablilcy \ref{tab:abs_errors} ukazano kilka parametrów statystycznych uzyskanych błędów względnych, dla szeregów czasowych znormalizowanych do przedziału $<1:2>$.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        \textbf{Metoda} & \textbf{Wartość średnia [\%]} & \textbf{Odchylenie standardowe [\%]} & \textbf{max(abs) [\%]} & \textbf{min(abs) [\%]} \\
+        \hline
+        ARIMA & 1.98 & 10.34 & 56.29 & 0.00 \\
+        \hline
+        XGB & 1.47 & 16.50 & 82.75 & 0.00 \\
+        \hline
+        XGB PACF & 1.99 & 14.38 & 78.18 & 0.01 \\
+        \hline
+    \end{tabular}
+    \caption{Parametry statystyczne uzyskanych błędów względnych dla szeregów czasowych znormalizowanych do przedziału $<1:2>$ (z dokładnością do 2 miejsc po przecinku).}
+    \label{tab:abs_errors}
+\end{table}
 
 \begin{figure}[H]
     \centering
@@ -422,10 +471,7 @@ Podkreślić należy, że dobór parametrów do modelu xgboost jest trudny z rac
 Brak praktyki z tym modelem ma wpływ na ostateczny stan wyników.
 
 
-
 \bibliographystyle{plain}
 \bibliography{MEUM_projekt.bib}
-
-
 
 \end{document}
