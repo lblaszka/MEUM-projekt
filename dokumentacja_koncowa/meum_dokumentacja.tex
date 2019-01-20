@@ -24,8 +24,6 @@
 \lhead{}
 \rhead{Metody ewolucyjne i uczenie się maszyn}
 
-
-
 \begin{document}
 \thispagestyle{empty}
 
@@ -46,7 +44,7 @@
 
 \vspace{5 mm}
 
-\Large{\textbf{Na jednym z benchmarków dot. modelowania szeregów czasowych (np. NN3 lub M3) porównać metodę xgboost z modelem liniowym.}}
+\Large{\textbf{Na jednym z benchmarków dot. modelowania szeregów czasowych (np. NN3 lub M3) porównać metodę XGBoost z modelem liniowym.}}
 \end{center}
 
 \vspace{3 cm}
@@ -71,7 +69,7 @@
 \newpage
 
 \section{Cel}
-Celem projektu było praktyczne poznanie dowolnie wybranego modelu liniowego oraz metody xgboost, stosowanych do modelowania szeregów czasowych.
+Celem projektu było praktyczne poznanie dowolnie wybranego modelu liniowego oraz metody XGBoost, stosowanych do modelowania szeregów czasowych.
 Jako model liniowy wybrany został popularny model ARIMA (\textit{ang. AutoRegressive Integrated Moving Average}).
 Realizacja celu oparta została na porównaniu obu metod na benchmark'u NN3.
 
@@ -88,9 +86,9 @@ Zawiera on mniej szeregów czasowych niż benchmark M3 (111 vs 3003), dlatego le
 
 \item W celu dopasowania najlepszego modelu ARIMA wykorzystana miała zostać metoda \textit{auto.arima} pochodząca z pakietu \textit{forecast}.
 
-\item W celu predykcji metodą xgboost wykorzystana miała zostać biblioteka \textit{xgboost} (\url{https://github.com/dmlc/xgboost}).
+\item W celu predykcji metodą XGBoost wykorzystana miała zostać biblioteka \textit{XGBoost} (\url{https://github.com/dmlc/xgboost}).
 
-\item Ze względu na brak jakiegokolwiek doświadczenia z metodą xgboost, oraz liczbę jej parametrów, sposób optymalizacji określony miał zostać na etapie implementacji.
+\item Ze względu na brak jakiegokolwiek doświadczenia z metodą XGBoost, oraz liczbę jej parametrów, sposób optymalizacji określony miał zostać na etapie implementacji.
 \end{itemize}
 
 \section{Krótki wstęp teoretyczny}
@@ -133,19 +131,22 @@ Sezonowy model ARIMA(p,d,q)(P,D,Q)$_s$ jest stosowany dla szeregów w których w
 \end{equation}
 gdzie y’’ jest szeregiem różnicowanym D-krotnie z opóźnieniem s, a następnie d-krotnym z opóźnieniem 1, natomiast $B^ky_t=y_{t-k}$\cite{analiza_i_prognozy_szeregow_czasowych_quantup}.
 
-\subsection{Metoda xgboost}
-Metoda xgboost (\textit{Extreme Gradient Boosting}) wywodzi się z metody GBM (\textit{ang. Gradient Boosting Machine}).
+\subsection{Metoda XGBoost}
+Metoda XGBoost (\textit{Extreme Gradient Boosting}) wywodzi się z metody GBM (\textit{ang. Gradient Boosting Machine}).
 Obie te metody opierają się o gradientowe wzmacnianie drzew (\textit{ang. gradient boosted trees}).
 U ich podstaw znajduje się model zespołu drzew decyzyjnych (\textit{ang. decision tree ensembles}).
 W zespole takim pojedyncze drzewo zazwyczaj słabo radzi sobie z klasyfikacją/regresją, dlatego do predykcji wykorzystywany jest cały zespół drzew.
 Idea wzmacniania gradientowego polega na tworzeniu ciągu prostych drzew, z których każde kolejne jest zbudowane do predykcji reszt generowanych przez poprzednie.
 
-Różnica w idei działania xgboost a GDM jest niewielka.
-xgboost używa bardziej regularnej formalizacji modelu w celu kontroli przeuczenia (\textit{over-fitting}).
-Dodatkowo xgboost jest mocno zoptymalizowany w obszarach szybkości obliczeń oraz zużycia pamięci.
+Różnica w idei działania XGBoost a GDM jest niewielka.
+XGBoost używa bardziej regularnej formalizacji modelu w celu kontroli przeuczenia (\textit{over-fitting}).
+Dodatkowo XGBoost jest mocno zoptymalizowany w obszarach szybkości obliczeń oraz zużycia pamięci.
 
-\textcolor{red}{Trzeba dodać informację co jest x a co jest y podczas predykcji w XGBoost.}
-
+Podczas uczenia i przewidywania z wykorzystaniem modelu XGBoost kluczową rolę odgrywają 2 zbiory danych $X$ oraz $Y$.
+Zbiór $X$ to tzw. zbiór atrybutów/cech (\textit{and. features}), natomiast zbiór $Y$ to tak zwany zbiór etykiet (\textit{ang. labels}).
+W przypadku szeregów czasowych atrybutami/cechami mogą być wartości szeregu przesuniętego w czasie lub dowolne inne parametry wyznaczane na podstawie wartości szeregu czasowego.
+Etykietami są wartości szeregów w poszczególnych chwilach czasowych.
+Predykcja polega na wyznaczeniu wartości etykiety na podstawie odpowiadającej jej wartości atrybutów.
 
 \section{Zbiór danych}
 Liczba szeregów czasowych znajdujących się w benchmark'u NN3 wynosi 111.
@@ -172,8 +173,7 @@ Znaleźć tam również można szeregi czasowe z wyraźnym trendem (rys. \ref{fi
         \includegraphics[width=.9\linewidth]{plot11.png}
         \caption{Trend}
         \label{fig:sfig3}
-    \end{subfigure}
-    \begin{subfigure}{.5\textwidth}
+    \end{subfigure} \begin{subfigure}{.5\textwidth}
         \centering
         \includegraphics[width=.9\linewidth]{plot59.png}
         \caption{Wahania okresowe}
@@ -472,15 +472,17 @@ Wykres \ref{fig:arima18} ukazuje rozrzut uzyskanych błędów bezwzględnych w z
     \centering
     \def\svgwidth{10cm}
     \input{./images/_ARIMA18__err_boxplot_index.pdf_tex}
-     \caption{Wykresy pudełkowe błędów względnych dla poszczególnych obserwacji szeregu testowego dla modeli ARIMA z predykcją 18 wartości.}
+     \caption{Wykresy pudełkowe błędów bezwzględnych dla poszczególnych obserwacji szeregu testowego dla modeli ARIMA z predykcją 18 wartości.}
     \label{fig:arima18}
 \end{figure}
 
+Co ciekawe, nie widać trendu polegającego na zwiększaniu się rozpiętości tzw. \textit{wąsów} wraz ze wzrostem indeksu przewidywanej wartości.
+
 \section{Wnioski}
 Z powyższych wykresów wynika, że predykcja z wykorzystaniem modelu ARIMA daje zauważalnie lepsze wyniki.
-Wsparcie predykcji xgboosta autokorelacją częściową miała wpływ pozytywny.
+Wsparcie predykcji XGBoosta autokorelacją częściową miała wpływ pozytywny.
 
-Podkreślić należy, że dobór parametrów do modelu xgboost jest trudny z racji ich ilości oraz wymaga doświadczenia.
+Podkreślić należy, że dobór parametrów do modelu XGBoost jest trudny z racji ich ilości oraz wymaga doświadczenia.
 Brak praktyki z tym modelem ma wpływ na ostateczny stan wyników.
 
 
