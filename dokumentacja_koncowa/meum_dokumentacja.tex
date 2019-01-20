@@ -131,6 +131,25 @@ Sezonowy model ARIMA(p,d,q)(P,D,Q)$_s$ jest stosowany dla szeregów w których w
 \end{equation}
 gdzie y’’ jest szeregiem różnicowanym D-krotnie z opóźnieniem s, a następnie d-krotnym z opóźnieniem 1, natomiast $B^ky_t=y_{t-k}$\cite{analiza_i_prognozy_szeregow_czasowych_quantup}.
 
+\subsection{Funkcja auto.arima() w pakiecie R}
+Pakiet R udostępnia funkcję auto.arima(). Zwraca ona model ARIMA lub sARIMA z parametrami które zostały określone na podstawie wartości AIC, AICc lub BIC.
+
+AIC (\textit{ang. Akaike Information Criterion}), AICc (\textit{ang. Second-order Akaike Information Criterion}) i BIC (\textit{ang. Akaike Information Criterion}) są kryteriami doboru parametrów. Ich wyższa wartość świadczy o lepszym stanie modelu. Kryteria pozwalają na optymalny dobór parametrów dla uzyskania najlepszych rezultatów predykcji jednocześnie nie dopuścić do przeuczenia.
+
+Funkcja auto.arima() umożliwia na uzyskanie modelu podając jedynie przebieg czasowy do szkolenia. 
+Na proces automatycznego doboru można wpłynąć podając dodatkowe parametry przy wywołaniu. Poniżej wybrane parametry:
+\begin{itemize}
+\item Granice wartości parametrów dla modeli ARIMA(p,d,q) oraz sARIMA(p,d,q)(P,D,Q)$_s$
+\item d - Kolejność pierwszego różnicowania, jeśli zostanie pominięty wartość zostanie określona na podstawie testu KPSS
+\item D - Kolejność pierwszego różnicowania, jeśli zostanie pominięty wartość zostanie określona na podstawie testu OCSB
+\item ic - wybór kryterium przy doborze parametrów (domyślnie AIC, BIC i AICc )
+\item xreg - zewnętrzny wektor regresu
+\item stationary - dla wartości TRUE to proces ograniczy się do modelu stacjonarnego
+\item seasonal - dla wartości FALSE to proces ograniczy się do modelu nie sezonowego
+\item allowdrift - dla wartości TRUE rozważane są modele z dryftem
+\item allowmean - dla wartości TRUE rozważane są modele o niezerowej średniej.
+\end{itemize}
+
 \subsection{Metoda XGBoost}
 Metoda XGBoost (\textit{Extreme Gradient Boosting}) wywodzi się z metody GBM (\textit{ang. Gradient Boosting Machine}).
 Obie te metody opierają się o gradientowe wzmacnianie drzew (\textit{ang. gradient boosted trees}).
@@ -196,9 +215,11 @@ Predykcja wartości odbywa się z krokiem o długości 1.
 Oznacza to, iż przy predykcji wartości dla chwil czasowych $t+n$ wykorzystywane są rzeczywiste wartości szeregu z chwil czasowych wcześniejszych od $t+n$.
 
 \subsection{ARIMA}
+W predykcji z wykorzystaniem modelu ARIMA wsparto się funkcja auto.arima() która automatycznie dobiera parametry modelu dla 111 przebiegów czasowych.
+Wykorzystano domyślnie definicje parametrów funkcji auto.arima() w zaufaniu, że pozwalają uzyskać optymalne wyniki dla nieokreślonej ilości przebiegów.
+
 Predykcje z krokiem o długości 1 zrealizowano tworząc oddzielny model dla każdej wartości szeregu testowego. Szereg uczący w każdym kroku jest zwiększany o jedną wartość z szeregu testowego.
 Do uzyskania przewidywanej wartości z wyliczonego modelu wykorzystaniu funkcję forecast. Parametr "h" określa dla ilu kroków ma zostać wyliczona przewidywana wartość.
-Parametry dla modelu ARIMA są wyliczane automatycznie przez funkcję auto.arima() na podstawie podanego szeregu czasowego.
 
 Poniżej kod dokonuje predykcji z krokiem o długości 1 na podstawie wyliczonego modelu ARIMA'y dla N-tego przebiegu czasowego benchmark'u NN3:
 \begin{lstlisting}[language=R]
