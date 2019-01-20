@@ -369,7 +369,7 @@ W tablilcy \ref{tab:abs_errors} ukazano kilka parametrów statystycznych uzyskan
 \begin{figure}[H]
     \centering
     \centering
-    \def\svgwidth{\columnwidth}
+    \def\svgwidth{10cm}
     \input{./images/err_density_common.pdf_tex}
     \caption{Porównanie gęstości błędów bezwzględnych.}
 \end{figure}
@@ -458,18 +458,29 @@ W tablilcy \ref{tab:abs_errors} ukazano kilka parametrów statystycznych uzyskan
 \begin{figure}[H]
     \centering
     \centering
-    \def\svgwidth{\columnwidth}
+    \def\svgwidth{10cm}
     \input{./images/rel_err_density_common.pdf_tex}
     \caption{Porównanie gęstości uzyskanych błędów względnych.}
 \end{figure}
 
 \subsection{ARIMA z predykcją 18 wartości}
+Podczas prac nad projektem przetestowano również zachowanie się modeli ARIMA w przypadku predykcji 18 wartości.
+Wykres \ref{fig:arima18} ukazuje rozrzut uzyskanych błędów bezwzględnych w zależności od indeksu przewidywanej wartości.
+
+\begin{figure}[H]
+    \centering
+    \centering
+    \def\svgwidth{10cm}
+    \input{./images/_ARIMA18__err_boxplot_index.pdf_tex}
+     \caption{Wykresy pudełkowe błędów względnych dla poszczególnych obserwacji szeregu testowego dla modeli ARIMA z predykcją 18 wartości.}
+    \label{fig:arima18}
+\end{figure}
 
 \section{Wnioski}
 Z powyższych wykresów wynika, że predykcja z wykorzystaniem modelu ARIMA daje zauważalnie lepsze wyniki.
 Wsparcie predykcji xgboosta autokorelacją częściową miała wpływ pozytywny.
 
-Podkreślić należy, że dobór parametrów do modelu xgboost jest trudny z racji ich ilości oraz wymaga doświadczenia. 
+Podkreślić należy, że dobór parametrów do modelu xgboost jest trudny z racji ich ilości oraz wymaga doświadczenia.
 Brak praktyki z tym modelem ma wpływ na ostateczny stan wyników.
 
 
